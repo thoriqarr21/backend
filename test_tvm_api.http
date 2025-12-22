@@ -1,0 +1,174 @@
+### ========================================
+### TVM REPORTS API TEST
+### ========================================
+
+@baseUrl = http://localhost:8080
+@adminToken = YOUR_ADMIN_TOKEN_HERE
+@userToken = YOUR_USER_TOKEN_HERE
+
+### ========================================
+### REGISTER & LOGIN
+### ========================================
+
+### Register Admin
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@ezytix.com",
+  "password": "admin123",
+  "full_name": "System Administrator",
+  "role": "admin"
+}
+
+### Register User (Petugas)
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "petugas1",
+  "email": "petugas1@ezytix.com",
+  "password": "petugas123",
+  "full_name": "Petugas Lapangan 1",
+  "role": "user"
+}
+
+### Login Admin
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Login User (Petugas)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "petugas1",
+  "password": "petugas123"
+}
+
+
+### ========================================
+### TVM REPORTS - USER/PETUGAS
+### ========================================
+
+### Create TVM Report (Petugas)
+POST {{baseUrl}}/api/v1/reports/
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "tvm_code": "TVM-001-JKT",
+  "location": "Stasiun Gambir",
+  "issue_type": "Hardware Malfunction",
+  "description": "Mesin kartu tidak bisa membaca kartu, layar error",
+  "priority": "high",
+  "image_url": "https://example.com/images/tvm001-error.jpg"
+}
+
+### Create Another Report
+POST {{baseUrl}}/api/v1/reports/
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "tvm_code": "TVM-002-JKT",
+  "location": "Stasiun Sudirman",
+  "issue_type": "Software Error",
+  "description": "Aplikasi hang saat proses pembayaran",
+  "priority": "urgent"
+}
+
+### Get All Reports (Petugas can view all)
+GET {{baseUrl}}/api/v1/reports/
+Authorization: Bearer {{userToken}}
+
+### Get All Reports with Filters
+GET {{baseUrl}}/api/v1/reports/?status=pending&priority=high&page=1&limit=10
+Authorization: Bearer {{userToken}}
+
+### Get My Reports Only (Reports I created)
+GET {{baseUrl}}/api/v1/reports/my
+Authorization: Bearer {{userToken}}
+
+### Get Specific Report by ID
+GET {{baseUrl}}/api/v1/reports/1
+Authorization: Bearer {{userToken}}
+
+### Update My Report (Petugas can update their own)
+PUT {{baseUrl}}/api/v1/reports/1
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "priority": "urgent",
+  "notes": "Update: Masalah bertambah parah, butuh penanganan segera"
+}
+
+
+### ========================================
+### TVM REPORTS - ADMIN
+### ========================================
+
+### Get All Reports (Admin)
+GET {{baseUrl}}/api/v1/reports/
+Authorization: Bearer {{adminToken}}
+
+### Get All Users (Admin Only)
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{adminToken}}
+
+### Get Statistics (Admin Only)
+GET {{baseUrl}}/api/v1/admin/reports/statistics
+Authorization: Bearer {{adminToken}}
+
+### Update Report Status (Admin)
+PUT {{baseUrl}}/api/v1/reports/1
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "in_progress",
+  "notes": "Teknisi sedang dalam perjalanan ke lokasi"
+}
+
+### Resolve Report (Admin)
+PUT {{baseUrl}}/api/v1/reports/1
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "status": "resolved",
+  "notes": "Hardware sudah diganti, TVM berfungsi normal kembali"
+}
+
+### Delete Report (Admin Only)
+DELETE {{baseUrl}}/api/v1/reports/1
+Authorization: Bearer {{adminToken}}
+
+
+### ========================================
+### TEST AUTHORIZATION
+### ========================================
+
+### Try to access admin endpoint with user token (Should Fail)
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{userToken}}
+
+### Try to delete report with user token (Should Fail)
+DELETE {{baseUrl}}/api/v1/reports/1
+Authorization: Bearer {{userToken}}
+
+### Try to update other user's report (Should Fail)
+PUT {{baseUrl}}/api/v1/reports/2
+Content-Type: application/json
+Authorization: Bearer {{userToken}}
+
+{
+  "status": "resolved"
+}

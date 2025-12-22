@@ -1,0 +1,1 @@
+drop table tvm_reports;
