@@ -64,6 +64,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			admin.PUT("/users/:id", userController.UpdateUser)
 			admin.DELETE("/users/:id", userController.DeleteUser)
 			admin.GET("/reports/statistics", tvmController.GetStatistics)
+			admin.GET("/reports", tvmController.GetAllReports)
 			admin.PUT("/reports/:id", tvmController.UpdateReport)
 			admin.DELETE("/reports/:id", tvmController.DeleteReport)
 			admin.GET("/barang", barangController.GetAllBarang)
