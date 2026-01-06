@@ -32,9 +32,10 @@ func (ctrl *TVMReportController) CreateReport(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Report created successfully",
-		"report":  report,
+	c.JSON(http.StatusCreated, models.TvmReportResponse{
+		Status:  http.StatusCreated,
+		Message: "Report created successfully",
+		Data:    report,
 	})
 }
 
@@ -98,9 +99,10 @@ func (ctrl *TVMReportController) UpdateReport(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Report updated successfully",
-		"report":  report,
+	c.JSON(http.StatusOK, models.TvmReportResponse{
+		Status:  http.StatusOK,
+		Message: "Report updated successfully",
+		Data:    report,
 	})
 }
 
@@ -119,7 +121,10 @@ func (ctrl *TVMReportController) DeleteReport(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Report deleted successfully"})
+	c.JSON(http.StatusOK, models.TvmReportResponse{
+		Status:  http.StatusOK,
+		Message: "Report deleted successfully",
+	})
 }
 
 func (ctrl *TVMReportController) GetMyReports(c *gin.Context) {
@@ -142,4 +147,37 @@ func (ctrl *TVMReportController) GetStatistics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"statistics": stats})
+}
+
+func (ctrl *TVMReportController) UpdateStatusByPetugas(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid report ID"})
+		return
+	}
+
+	var req models.UpdateReportStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, _ := c.Get("user_id")
+	// user, _ := c.Get("user")
+
+	report, err := ctrl.usecase.UpdateReportStatusByPetugas(
+		uint(id),
+		req.Status,
+		userID.(uint),
+	)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.TvmReportResponse{
+		Status:  http.StatusOK,
+		Message: "Status berhasil diperbarui",
+		Data:    report,
+	})
 }

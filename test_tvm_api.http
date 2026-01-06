@@ -172,3 +172,178 @@ Authorization: Bearer {{userToken}}
 {
   "status": "resolved"
 }
+
+### ========================================
+### EZYTIX BACKEND API TEST COLLECTION
+### ========================================
+
+### Variables
+@baseUrl = http://localhost:8080
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.paste_your_actual_token_here
+
+### ========================================
+### HEALTH CHECK
+### ========================================
+
+### Health Check
+GET {{baseUrl}}/health
+
+
+### ========================================
+### AUTHENTICATION
+### ========================================
+
+### 1. Register New User
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "password": "password123"
+}
+
+### 2. Register Another User
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### 3. Login User
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+### 4. Login Admin
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### 5. Login with Wrong Password (Should Fail)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "wrongpassword"
+}
+
+### 6. Register with Duplicate Username (Should Fail)
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "another@example.com",
+  "password": "password123"
+}
+
+### 7. Register with Invalid Email (Should Fail)
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "email": "invalidemail",
+  "password": "password123"
+}
+
+
+### ========================================
+### PROTECTED ROUTES (Need Token)
+### ========================================
+
+### 8. Get User Profile (Protected)
+# First login and copy the token, then replace @token variable above
+GET {{baseUrl}}/api/v1/users/profile
+Authorization: Bearer {{token}}
+
+### 9. Get All Users (Protected)
+GET {{baseUrl}}/api/v1/users/
+Authorization: Bearer {{token}}
+
+### 10. Access Protected Route Without Token (Should Fail)
+GET {{baseUrl}}/api/v1/users/profile
+
+### 11. Access Protected Route with Invalid Token (Should Fail)
+GET {{baseUrl}}/api/v1/users/profile
+Authorization: Bearer invalid_token_here
+
+
+### ========================================
+### USER MANAGEMENT
+### ========================================
+
+### 12. Get User by ID (Admin Only)
+GET {{baseUrl}}/api/v1/admin/users/1
+Authorization: Bearer {{token}}
+
+### 13. Update Own Profile
+PUT {{baseUrl}}/api/v1/users/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com",
+  "full_name": "Updated Name"
+}
+
+### 14. Update User by Admin
+PUT {{baseUrl}}/api/v1/admin/users/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "admin_updated@example.com",
+  "full_name": "Admin Updated Name",
+  "role": "admin"
+}
+
+### 15. Change Password
+POST {{baseUrl}}/api/v1/users/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "old_password": "password123",
+  "new_password": "newpassword123"
+}
+
+### 16. Delete User (Admin Only)
+DELETE {{baseUrl}}/api/v1/admin/users/2
+Authorization: Bearer {{token}}
+
+### 17. Try Update Other User (Should Fail for Non-Admin)
+PUT {{baseUrl}}/api/v1/admin/users/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "full_name": "Trying to update other user"
+}
+
+### 18. Try Delete User (Should Fail for Non-Admin)
+DELETE {{baseUrl}}/api/v1/admin/users/1
+Authorization: Bearer {{token}}
+
+
+### ========================================
+### NOTES:
+### ========================================
+# 1. Start server first: go run main.go
+# 2. Use VS Code REST Client extension or copy to Postman
+# 3. After login, copy the token from response
+# 4. Replace @token variable with your actual token
+# 5. Test protected routes with valid token

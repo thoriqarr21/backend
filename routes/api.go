@@ -37,6 +37,8 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		users.Use(middleware.AuthMiddleware())
 		{
 			users.GET("/profile", userController.GetProfile)
+			users.PUT("/profile", userController.UpdateUser)        // Update own profile
+			users.POST("/change-password", userController.ChangePassword)
 		}
 
 		// Protected routes - Admin only
@@ -45,6 +47,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		admin.Use(middleware.RoleMiddleware(db, models.RoleAdmin))
 		{
 			admin.GET("/users", userController.GetAllUsers)
+			admin.GET("/users/:id", userController.GetUserByID)
+			admin.PUT("/users/:id", userController.UpdateUser)      // Admin update any user
+			admin.DELETE("/users/:id", userController.DeleteUser)
 			admin.GET("/reports/statistics", tvmController.GetStatistics)
 		}
 

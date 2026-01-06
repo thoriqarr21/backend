@@ -15,6 +15,8 @@ type TVMReportRepository interface {
 	GetByUser(userID uint) ([]models.TVMReport, error)
 	GetStatistics() (map[string]interface{}, error)
 	FindActiveByTVMCode(tvmCode string) (*models.TVMReport, error)
+	UpdateStatus(id uint, status models.ReportStatus, resolverID *uint) error
+
 }
 
 type tvmReportRepository struct {
@@ -135,4 +137,23 @@ func (r *tvmReportRepository) GetStatistics() (map[string]interface{}, error) {
 	stats["total"] = total
 
 	return stats, nil
+}
+
+func (r *tvmReportRepository) UpdateStatus(
+	id uint,
+	status models.ReportStatus,
+	resolverID *uint,
+) error {
+	updateData := map[string]interface{}{
+		"status": status,
+	}
+
+	// Jika ada resolver (petugas)
+	if resolverID != nil {
+		updateData["resolved_by"] = *resolverID
+	}
+
+	return r.db.Model(&models.TVMReport{}).
+		Where("id = ?", id).
+		Updates(updateData).Error
 }

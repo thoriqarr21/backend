@@ -15,6 +15,12 @@ type TVMReportUsecase interface {
 	DeleteReport(id uint, userRole models.Role) error
 	GetMyReports(userID uint) ([]models.TVMReport, error)
 	GetStatistics() (map[string]interface{}, error)
+	UpdateReportStatusByPetugas(
+		id uint,
+		status models.ReportStatus,
+		userID uint,
+	) (*models.TVMReport, error)
+
 }
 
 type tvmReportUsecase struct {
@@ -27,10 +33,10 @@ func NewTVMReportUsecase(repo repository.TVMReportRepository) TVMReportUsecase {
 
 func (u *tvmReportUsecase) CreateReport(req *models.CreateReportRequest, userID uint) (*models.TVMReport, error) {
 	// Check if there's already an active report for this TVM
-	existingReport, err := u.repo.FindActiveByTVMCode(req.TVMCode)
-	if err == nil && existingReport != nil {
-		return nil, errors.New("TVM Code sudah terdaftar. TVM Code: " + req.TVMCode + " dengan status " + string(existingReport.Status))
-	}
+	// existingReport, err := u.repo.FindActiveByTVMCode(req.TVMCode)
+	// if err == nil && existingReport != nil {
+	// 	return nil, errors.New("TVM Code sudah terdaftar. TVM Code: " + req.TVMCode + " dengan status " + string(existingReport.Status))
+	// }
 
 	priority := req.Priority
 	if priority == "" {
@@ -81,6 +87,10 @@ func (u *tvmReportUsecase) UpdateReport(id uint, req *models.UpdateReportRequest
 		return nil, errors.New("unauthorized to update this report")
 	}
 
+	if req.TVMCode != "" {
+		report.TVMCode = req.TVMCode
+	}
+
 	// Update fields
 	if req.Status != "" {
 		report.Status = req.Status
@@ -95,12 +105,18 @@ func (u *tvmReportUsecase) UpdateReport(id uint, req *models.UpdateReportRequest
 		}
 	}
 
-	if req.Priority != "" {
-		report.Priority = req.Priority
+	if req.IssueType != "" {
+		report.IssueType = req.IssueType
+	}
+	if req.Location != "" {
+		report.Location = req.Location
+	}
+	if req.Description != "" {
+		report.Description = req.Description
 	}
 
-	if req.Notes != "" {
-		report.Notes = req.Notes
+	if req.Priority != "" {
+		report.Priority = req.Priority
 	}
 
 	if err := u.repo.Update(report); err != nil {
@@ -116,6 +132,11 @@ func (u *tvmReportUsecase) DeleteReport(id uint, userRole models.Role) error {
 		return errors.New("only admin can delete reports")
 	}
 
+	_, err := u.repo.FindByID(id)
+	if err != nil {
+		return errors.New("report not found")
+	}
+
 	return u.repo.Delete(id)
 }
 
@@ -125,4 +146,52 @@ func (u *tvmReportUsecase) GetMyReports(userID uint) ([]models.TVMReport, error)
 
 func (u *tvmReportUsecase) GetStatistics() (map[string]interface{}, error) {
 	return u.repo.GetStatistics()
+}
+
+func (u *tvmReportUsecase) UpdateReportStatusByPetugas(
+	id uint,
+	status models.ReportStatus,
+	userID uint,
+) (*models.TVMReport, error) {
+
+
+	report, err := u.repo.FindByID(id)
+	if err != nil {
+		return nil, errors.New("report not found")
+	}
+
+	// 🔁 VALIDASI ALUR STATUS
+	switch report.Status {
+	case models.StatusPending:
+		if status != models.StatusInProgress {
+			return nil, errors.New("status tidak valid")
+		}
+
+	case models.StatusInProgress:
+		if status != models.StatusResolved {
+			return nil, errors.New("status tidak valid")
+		}
+
+	case models.StatusResolved:
+		return nil, errors.New("report sudah selesai")
+
+	default:
+		return nil, errors.New("status tidak dikenal")
+	}
+
+	// ✅ UPDATE STATUS
+	report.Status = status
+
+	// ⏰ JIKA RESOLVED
+	if status == models.StatusResolved {
+		now := time.Now()
+		report.ResolvedAt = &now
+		report.ResolvedBy = &userID
+	}
+
+	if err := u.repo.Update(report); err != nil {
+		return nil, err
+	}
+
+	return u.repo.FindByID(report.ID)
 }
