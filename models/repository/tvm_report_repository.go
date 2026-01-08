@@ -57,7 +57,7 @@ func (r *tvmReportRepository) GetAll(filter *models.ReportFilterRequest) ([]mode
 	var reports []models.TVMReport
 	var total int64
 
-	query := r.db.Model(&models.TVMReport{}).Preload("Reporter").Preload("Resolver")
+	query := r.db.Model(&models.TVMReport{}).Preload("Reporter").Preload("Resolver").Preload("Barang")
 
 	// Apply filters
 	if filter.Status != "" {

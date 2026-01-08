@@ -10,6 +10,7 @@ type BarangRepository interface {
 	GetAllBarang() ([]models.Barang, error)
 	FindByID(id uint) (*models.Barang, error)
 	FindByNama_barang(nama_barang string) (*models.Barang, error)
+	FindByTVMCode(tvmCode string) (*models.Barang, error)
 	Create(barang *models.Barang) error
 	Update(barang *models.Barang) error
 	Delete(id uint) error
@@ -48,6 +49,15 @@ func (r *barangRepository) Update(barang *models.Barang) error {
 
 func (r *barangRepository) Delete(id uint) error {
 	return r.db.Delete(&models.Barang{}, id).Error
+}
+
+func (r *barangRepository) FindByTVMCode(tvmCode string) (*models.Barang, error) {
+	var barang models.Barang
+	err := r.db.Where("tvm_code = ?", tvmCode).First(&barang).Error
+	if err != nil {
+		return nil, err
+	}
+	return &barang, nil
 }
 
 func (r *barangRepository) FindByID(id uint) (*models.Barang, error) {

@@ -17,15 +17,15 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userController := controllers.NewUserController(userUsecase)
 
-	// Initialize TVM report layers
-	tvmRepo := repository.NewTVMReportRepository(db)
-	tvmUsecase := usecase.NewTVMReportUsecase(tvmRepo)
-	tvmController := controllers.NewTVMReportController(tvmUsecase)
-
 	// Initialize Barang layers
 	barangRepo := repository.NewBarangRepository(db)
 	barangUsecase := usecase.NewBarangUsecase(barangRepo)
 	barangController := controllers.NewBarangController(barangUsecase)
+
+	// Initialize TVM report layers
+	tvmRepo := repository.NewTVMReportRepository(db)
+	tvmUsecase := usecase.NewTVMReportUsecase(tvmRepo, barangRepo)
+	tvmController := controllers.NewTVMReportController(tvmUsecase)
 
 	// API v1 group
 	v1 := r.Group("/api/v1")

@@ -24,26 +24,35 @@ type TVMReportUsecase interface {
 }
 
 type tvmReportUsecase struct {
-	repo repository.TVMReportRepository
+	repo    repository.TVMReportRepository
+	barangRepo repository.BarangRepository
 }
 
-func NewTVMReportUsecase(repo repository.TVMReportRepository) TVMReportUsecase {
-	return &tvmReportUsecase{repo: repo}
+func NewTVMReportUsecase(repo repository.TVMReportRepository, barangRepo repository.BarangRepository) TVMReportUsecase {
+	return &tvmReportUsecase{
+		repo:      repo,
+		barangRepo: barangRepo,
+	}
 }
 
-func (u *tvmReportUsecase) CreateReport(req *models.CreateReportRequest, userID uint) (*models.TVMReport, error) {
-	// Check if there's already an active report for this TVM
-	// existingReport, err := u.repo.FindActiveByTVMCode(req.TVMCode)
-	// if err == nil && existingReport != nil {
-	// 	return nil, errors.New("TVM Code sudah terdaftar. TVM Code: " + req.TVMCode + " dengan status " + string(existingReport.Status))
-	// }
+func (u *tvmReportUsecase) CreateReport(
+	req *models.CreateReportRequest,
+	userID uint,
+) (*models.TVMReport, error) {
+
+	// 🔍 Cari barang berdasarkan ID
+	barang, err := u.barangRepo.FindByID(req.BarangID)
+	if err != nil {
+		return nil, errors.New("barang tidak ditemukan")
+	}
 
 	priority := req.Priority
 	if priority == "" {
-		priority = "normal"
+		priority = "medium"
 	}
 
 	report := &models.TVMReport{
+		BarangID:    barang.ID, // 🔥 DIAMBIL DARI TABEL BARANG
 		TVMCode:     req.TVMCode,
 		Location:    req.Location,
 		IssueType:   req.IssueType,

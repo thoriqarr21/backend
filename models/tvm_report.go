@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-
 )
 
 type ReportStatus string
@@ -23,6 +21,8 @@ type TvmReportResponse struct {
 
 type TVMReport struct {
 	ID          uint           `gorm:"primarykey;column:id" json:"id"`
+	BarangID    uint           `gorm:"not null;column:barang_id" json:"barang_id"`
+	Barang      *Barang        `gorm:"foreignKey:BarangID;references:ID" json:"barang,omitempty"`
 	TVMCode     string         `gorm:"type:varchar(50);not null;column:tvm_code" json:"tvm_code"`
 	Location    string         `gorm:"type:varchar(255);not null;column:location" json:"location"`
 	IssueType   string         `gorm:"type:varchar(100);not null;column:issue_type" json:"issue_type"`
@@ -35,7 +35,7 @@ type TVMReport struct {
 	ResolvedBy  *uint          `gorm:"column:resolved_by" json:"resolved_by,omitempty"`
 	Resolver    *User          `gorm:"foreignKey:ResolvedBy" json:"resolver,omitempty"`
 	ResolvedAt  *time.Time     `gorm:"column:resolved_at" json:"resolved_at,omitempty"`
-	Notes       string         `gorm:"type:text;column:notes" json:"notes,omitempty"`
+	// Notes       string         `gorm:"type:text;column:notes" json:"notes,omitempty"`
 	CreatedAt   time.Time      `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -46,6 +46,7 @@ func (TVMReport) TableName() string {
 }
 
 type CreateReportRequest struct {
+	BarangID    uint   `json:"barang_id" binding:"required"`
 	TVMCode     string `json:"tvm_code" binding:"required"`
 	Location    string `json:"location" binding:"required"`
 	IssueType   string `json:"issue_type" binding:"required"`
@@ -55,6 +56,7 @@ type CreateReportRequest struct {
 }
 
 type UpdateReportRequest struct {
+	BarangID    uint   `json:"barang_id" binding:"required"`
 	TVMCode     string `json:"tvm_code" binding:"required"`
 	Location    string `json:"location" binding:"required"`
 	IssueType   string `json:"issue_type" binding:"required"`

@@ -57,6 +57,7 @@ func (u *userUsecase) Register(req *models.RegisterRequest) (*models.User, error
 		Password: string(hashedPassword),
 		FullName: req.FullName,
 		Role:     req.Role,
+		Phone:    req.Phone,
 	}
 
 	// Default role is user if not specified

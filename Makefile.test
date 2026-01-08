@@ -1,0 +1,57 @@
+.PHONY: test test-verbose test-coverage test-auth test-user test-admin test-setup test-clean
+
+# Run all tests
+test:
+	@echo "Running all tests..."
+	go test ./tests/... -v
+
+# Run tests with verbose output
+test-verbose:
+	@echo "Running tests with verbose output..."
+	go test ./tests/... -v -count=1
+
+# Run tests with coverage
+test-coverage:
+	@echo "Running tests with coverage..."
+	go test ./tests/... -coverprofile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
+
+# Run specific test files
+test-auth:
+	@echo "Running authentication tests..."
+	go test ./tests/ -v -run TestRegister -run TestLogin
+
+test-user:
+	@echo "Running user management tests..."
+	go test ./tests/ -v -run TestGetProfile -run TestUpdateProfile -run TestChangePassword
+
+test-admin:
+	@echo "Running admin tests..."
+	go test ./tests/ -v -run TestGetAllUsers -run TestGetUserByID -run TestAdminUpdate -run TestDelete
+
+# Setup test database
+test-setup:
+	@echo "Setting up test database..."
+	docker-compose exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS ezytix_test;"
+	docker-compose exec postgres psql -U postgres -c "CREATE DATABASE ezytix_test;"
+	@echo "Test database created!"
+
+# Clean test artifacts
+test-clean:
+	@echo "Cleaning test artifacts..."
+	rm -f coverage.out coverage.html
+	@echo "Cleaned!"
+
+# Run tests in Docker
+test-docker:
+	@echo "Running tests in Docker..."
+	docker-compose exec backend go test ./tests/... -v
+
+# Quick test (no cache)
+test-quick:
+	go test ./tests/... -count=1
+
+# Watch mode (requires entr)
+test-watch:
+	find . -name '*.go' | entr -c go test ./tests/... -v

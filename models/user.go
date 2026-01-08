@@ -43,6 +43,7 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 	FullName string `json:"full_name" binding:"required"`
 	Role     Role   `json:"role" binding:"omitempty,oneof=admin user"`
+	Phone    string `json:"phone" binding:"required"`
 }
 
 type LoginResponse struct {
@@ -55,7 +56,7 @@ type CreateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
 	FullName string `json:"full_name" binding:"required"`
-	Phone 	 string `json:"phone" binding:"required"`
+	Phone    string `json:"phone" binding:"required"`
 	Role     Role   `json:"role" binding:"omitempty,oneof=admin user"`
 }
 
