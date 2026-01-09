@@ -16,7 +16,10 @@ type TVMReportRepository interface {
 	GetStatistics() (map[string]interface{}, error)
 	FindActiveByTVMCode(tvmCode string) (*models.TVMReport, error)
 	UpdateStatus(id uint, status models.ReportStatus, resolverID *uint) error
-
+	CountReports() (int64, error)
+	CountReportsByStatus() (map[string]int64, error)
+	CountReportsPerMonth() ([]map[string]interface{}, error)
+	GetLatestReports(limit int) ([]models.TVMReport, error)
 }
 
 type tvmReportRepository struct {
@@ -157,3 +160,59 @@ func (r *tvmReportRepository) UpdateStatus(
 		Where("id = ?", id).
 		Updates(updateData).Error
 }
+
+func (r *tvmReportRepository) CountReports() (int64, error) {
+	var total int64
+	err := r.db.Model(&models.TVMReport{}).Count(&total).Error
+	return total, err
+}
+
+
+func (r *tvmReportRepository) CountReportsByStatus() (map[string]int64, error) {
+	type Result struct {
+		Status string
+		Total  int64
+	}
+
+	var results []Result
+
+	err := r.db.
+		Model(&models.TVMReport{}).
+		Select("status, COUNT(*) as total").
+		Group("status").
+		Scan(&results).Error
+
+	data := make(map[string]int64)
+	for _, r := range results {
+		data[r.Status] = r.Total
+	}
+
+	return data, err
+}
+
+func (r *tvmReportRepository) CountReportsPerMonth() ([]map[string]interface{}, error) {
+	var results []map[string]interface{}
+
+	err := r.db.Raw(`
+		SELECT 
+			TO_CHAR(created_at, 'Mon') as month,
+			COUNT(*) as total
+		FROM tvm_reports
+		GROUP BY month
+		ORDER BY MIN(created_at)
+	`).Scan(&results).Error
+
+	return results, err
+}
+
+func (r *tvmReportRepository) GetLatestReports(limit int) ([]models.TVMReport, error) {
+	var reports []models.TVMReport
+
+	err := r.db.
+		Order("created_at DESC").
+		Limit(limit).
+		Find(&reports).Error
+
+	return reports, err
+}
+

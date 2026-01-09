@@ -181,3 +181,14 @@ func (ctrl *TVMReportController) UpdateStatusByPetugas(c *gin.Context) {
 		Data:    report,
 	})
 }
+
+func (c *TVMReportController) GetDashboard(ctx *gin.Context) {
+	userID, _ := ctx.Get("user_id")
+	data, err := c.usecase.GetDashboard(userID.(uint))
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, data)
+}

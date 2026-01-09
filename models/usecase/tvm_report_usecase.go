@@ -4,7 +4,10 @@ import (
 	"backend/models"
 	"backend/models/repository"
 	"errors"
+	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type TVMReportUsecase interface {
@@ -14,6 +17,7 @@ type TVMReportUsecase interface {
 	UpdateReport(id uint, req *models.UpdateReportRequest, userID uint, userRole models.Role) (*models.TVMReport, error)
 	DeleteReport(id uint, userRole models.Role) error
 	GetMyReports(userID uint) ([]models.TVMReport, error)
+	GetDashboard(userID uint) (map[string]interface{}, error)
 	GetStatistics() (map[string]interface{}, error)
 	UpdateReportStatusByPetugas(
 		id uint,
@@ -51,8 +55,20 @@ func (u *tvmReportUsecase) CreateReport(
 		priority = "medium"
 	}
 
+	stok, err := strconv.Atoi(barang.Stok)
+	if err != nil || stok <= 0 {
+		return nil, errors.New("stok barang habis")
+	}
+
+	newStok := strconv.Itoa(stok - 1)
+	barang.Stok = newStok
+
+	if err := u.barangRepo.Update(barang); err != nil {
+		return nil, errors.New("gagal update stok barang")
+	}
+
 	report := &models.TVMReport{
-		BarangID:    barang.ID, // 🔥 DIAMBIL DARI TABEL BARANG
+		BarangID:    barang.ID, 
 		TVMCode:     req.TVMCode,
 		Location:    req.Location,
 		IssueType:   req.IssueType,
@@ -203,4 +219,40 @@ func (u *tvmReportUsecase) UpdateReportStatusByPetugas(
 	}
 
 	return u.repo.FindByID(report.ID)
+}
+
+func (u *tvmReportUsecase) GetDashboard(userID uint) (map[string]interface{}, error) {
+
+	totalReports, err := u.repo.CountReports()
+	if err != nil {
+		return nil, err
+	}
+
+	totalBarang, err := u.barangRepo.CountBarang()
+	if err != nil {
+		return nil, err
+	}
+
+	statusStats, err := u.repo.CountReportsByStatus()
+	if err != nil {
+		return nil, err
+	}
+
+	monthlyStats, err := u.repo.CountReportsPerMonth()
+	if err != nil {
+		return nil, err
+	}
+
+	latestReports, err := u.repo.GetLatestReports(5)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{
+		"total_reports":     totalReports,
+		"total_barang":      totalBarang,
+		"reports_by_status": statusStats,
+		"reports_per_month": monthlyStats,
+		"latest_reports":    latestReports,
+	}, nil
 }

@@ -14,6 +14,7 @@ type BarangRepository interface {
 	Create(barang *models.Barang) error
 	Update(barang *models.Barang) error
 	Delete(id uint) error
+	CountBarang() (int64, error)
 }
 
 func (r *barangRepository) FindByNama_barang(nama_barang string) (*models.Barang, error) {
@@ -67,4 +68,10 @@ func (r *barangRepository) FindByID(id uint) (*models.Barang, error) {
 		return nil, err
 	}
 	return &barang, nil
+}
+
+func (r *barangRepository) CountBarang() (int64, error) {
+	var total int64
+	err := r.db.Model(&models.Barang{}).Count(&total).Error
+	return total, err
 }

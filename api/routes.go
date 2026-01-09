@@ -53,6 +53,12 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			users.POST("/change-password", userController.ChangePassword)
 		}
 
+		barang := v1.Group("/barang")
+		barang.Use(middleware.AuthMiddleware())
+		{
+			barang.GET("/", barangController.GetAllBarang)
+		}
+
 		// Protected routes - Admin only
 		admin := v1.Group("/admin")
 		admin.Use(middleware.AuthMiddleware())
@@ -64,6 +70,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			admin.PUT("/users/:id", userController.UpdateUser)
 			admin.DELETE("/users/:id", userController.DeleteUser)
 			admin.GET("/reports/statistics", tvmController.GetStatistics)
+			admin.GET("/dashboard", tvmController.GetDashboard)
 			admin.GET("/reports", tvmController.GetAllReports)
 			admin.PUT("/reports/:id", tvmController.UpdateReport)
 			admin.DELETE("/reports/:id", tvmController.DeleteReport)

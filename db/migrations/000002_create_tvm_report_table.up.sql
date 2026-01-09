@@ -34,7 +34,6 @@ CREATE TABLE tvm_reports (
     updated_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
 
--- Trigger untuk auto-update updated_at
 CREATE OR REPLACE FUNCTION update_tvm_reports_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -48,7 +47,7 @@ BEFORE UPDATE ON tvm_reports
 FOR EACH ROW
 EXECUTE FUNCTION update_tvm_reports_updated_at();
 
--- Index untuk performa (opsional tapi disarankan)
+
 CREATE INDEX idx_tvm_reports_tvm_code ON tvm_reports(tvm_code);
 CREATE INDEX idx_tvm_reports_status ON tvm_reports(status);
 CREATE INDEX idx_tvm_reports_reported_by ON tvm_reports(reported_by);
