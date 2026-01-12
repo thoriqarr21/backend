@@ -82,7 +82,7 @@ func LoadConfig() *Config {
 	godotenv.Load()
 
 	return &Config{
-		DBHost:     getEnv("DB_HOST", "172.16.10.82"),
+		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"), // Port PostgreSQL
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "12345"),

@@ -46,3 +46,31 @@ func TestAdminUpdateUser(t *testing.T) {
 	// assert.Equal(t, "user", user.Role)
 	assert.Equal(t, "0893344443", user.Phone)
 }
+
+func TestAdminCreateUser(t *testing.T) {
+	r := GetRouter()
+
+	token := LoginAsAdmin(t, r)
+
+	payload := map[string]string{
+		"username":  "createduser",
+		"email":     "created@test.com",
+		"full_name": "Created",
+		"password":  "password123",
+		"phone":     "0893344443",
+	}
+
+	w := PerformRequest(r, "POST", "/api/v1/admin/users", payload, token)
+	assert.Equal(t, 201, w.Code)
+
+	var user models.User
+	err := GetDB().
+		Where("email = ?", "created@test.com").
+		First(&user).Error
+
+	assert.NoError(t, err)
+	assert.Equal(t, "createduser", user.Username)
+	assert.Equal(t, "Created", user.FullName)
+	assert.Equal(t, models.RoleUser, user.Role)
+	assert.Equal(t, "0893344443", user.Phone)
+}

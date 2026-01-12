@@ -136,7 +136,7 @@ func (u *userUsecase) CreateUser(req models.CreateUserRequest) (*models.User, er
 
 	// Default role is user if not specified
 	if user.Role == "" {
-		user.Role = models.RoleAdmin
+		user.Role = models.RoleUser
 	}
 
 	if err := u.repo.Create(user); err != nil {
