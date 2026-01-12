@@ -6,38 +6,42 @@ import (
 	"backend/models"
 	"backend/models/repository"
 	"backend/models/usecase"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func SetupRoutes(r *gin.Engine, db *gorm.DB) {
-	// Initialize user layers
+	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
+		os.Mkdir("uploads", 0755)
+	}
+	r.Static("/uploads", "./uploads")
+
 	userRepo := repository.NewUserRepository(db)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userController := controllers.NewUserController(userUsecase)
 
-	// Initialize Barang layers
 	barangRepo := repository.NewBarangRepository(db)
 	barangUsecase := usecase.NewBarangUsecase(barangRepo)
 	barangController := controllers.NewBarangController(barangUsecase)
 
-	// Initialize TVM report layers
+
 	tvmRepo := repository.NewTVMReportRepository(db)
 	tvmUsecase := usecase.NewTVMReportUsecase(tvmRepo, barangRepo)
 	tvmController := controllers.NewTVMReportController(tvmUsecase)
 
-	// API v1 group
+	// --- API v1 GROUP ---
 	v1 := r.Group("/api/v1")
 	{
-		// Public routes (tanpa auth)
+		// Public routes
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", userController.Register)
 			auth.POST("/login", userController.Login)
 		}
 
-		// Protected auth routes (perlu token)
+		// Protected auth routes
 		authProtected := v1.Group("/auth")
 		authProtected.Use(middleware.AuthMiddleware())
 		{
@@ -84,7 +88,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		reports := v1.Group("/reports")
 		reports.Use(middleware.AuthMiddleware())
 		{
-			reports.POST("/", tvmController.CreateReport)
+			// Endpoint ini sekarang mengharapkan multipart/form-data untuk upload file
+			reports.POST("/", tvmController.CreateReport) 
+			
 			reports.GET("/", tvmController.GetAllReports)
 			reports.PATCH("/:id/status", tvmController.UpdateStatusByPetugas)
 			reports.GET("/my", tvmController.GetMyReports)

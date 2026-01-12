@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type TVMReportController struct {
@@ -18,26 +19,68 @@ func NewTVMReportController(usecase usecase.TVMReportUsecase) *TVMReportControll
 }
 
 func (ctrl *TVMReportController) CreateReport(c *gin.Context) {
+
 	var req models.CreateReportRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	// 🔴 WAJIB pakai FormMultipart
+	if err := c.ShouldBindWith(&req, binding.FormMultipart); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
-	userID, _ := c.Get("user_id")
-
-	report, err := ctrl.usecase.CreateReport(&req, userID.(uint))
+	// 🔍 Ambil file
+	file, err := c.FormFile("image")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "image wajib diupload",
+		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, models.TvmReportResponse{
-		Status:  http.StatusCreated,
-		Message: "Report created successfully",
-		Data:    report,
+	// 💾 Simpan gambar
+	imagePath, err := usecase.SaveUploadedImage(c, file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 🔐 Ambil user_id dari middleware JWT
+	userIDAny, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "unauthorized",
+		})
+		return
+	}
+
+	userID := userIDAny.(uint)
+
+	// 🚀 Create report
+	report, err := ctrl.usecase.CreateReport(
+		&req,
+		userID,
+		imagePath,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  201,
+		"message": "Report created successfully",
+		"data":    report,
 	})
 }
+
+
 
 func (ctrl *TVMReportController) GetReportByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))

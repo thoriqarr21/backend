@@ -46,14 +46,14 @@ func (TVMReport) TableName() string {
 }
 
 type CreateReportRequest struct {
-	BarangID    uint   `json:"barang_id" binding:"required"`
-	TVMCode     string `json:"tvm_code" binding:"required"`
-	Location    string `json:"location" binding:"required"`
-	IssueType   string `json:"issue_type" binding:"required"`
-	Description string `json:"description" binding:"required"`
-	Priority    string `json:"priority" binding:"omitempty,oneof=low medium high urgent"`
-	ImageURL    string `json:"image_url"`
+	BarangID    uint   `form:"barang_id" binding:"required"`
+	TVMCode     string `form:"tvm_code" binding:"required"`
+	Location    string `form:"location" binding:"required"`
+	IssueType   string `form:"issue_type" binding:"required"`
+	Description string `form:"description" binding:"required"`
+	Priority    string `form:"priority" binding:"omitempty,oneof=low medium high urgent"`
 }
+
 
 type UpdateReportRequest struct {
 	BarangID    uint   `json:"barang_id" binding:"required"`

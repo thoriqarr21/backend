@@ -4,14 +4,19 @@ import (
 	"backend/models"
 	"backend/models/repository"
 	"errors"
+	"fmt"
+	"mime/multipart"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type TVMReportUsecase interface {
-	CreateReport(req *models.CreateReportRequest, userID uint) (*models.TVMReport, error)
+	CreateReport(req *models.CreateReportRequest, userID uint, imagePath string) (*models.TVMReport, error)
 	GetReportByID(id uint) (*models.TVMReport, error)
 	GetAllReports(filter *models.ReportFilterRequest) ([]models.TVMReport, int64, error)
 	UpdateReport(id uint, req *models.UpdateReportRequest, userID uint, userRole models.Role) (*models.TVMReport, error)
@@ -40,50 +45,41 @@ func NewTVMReportUsecase(repo repository.TVMReportRepository, barangRepo reposit
 }
 
 func (u *tvmReportUsecase) CreateReport(
-	req *models.CreateReportRequest,
-	userID uint,
+    req *models.CreateReportRequest,
+    userID uint,
+    imagePath string, // Ini akan berisi "uploads/nama-file.jpg"
 ) (*models.TVMReport, error) {
 
-	// 🔍 Cari barang berdasarkan ID
-	barang, err := u.barangRepo.FindByID(req.BarangID)
-	if err != nil {
-		return nil, errors.New("barang tidak ditemukan")
-	}
+    barang, err := u.barangRepo.FindByID(req.BarangID)
+    if err != nil {
+        return nil, errors.New("barang tidak ditemukan")
+    }
 
-	priority := req.Priority
-	if priority == "" {
-		priority = "medium"
-	}
+    stok, _ := strconv.Atoi(barang.Stok)
+    if stok <= 0 {
+        return nil, errors.New("stok barang habis")
+    }
 
-	stok, err := strconv.Atoi(barang.Stok)
-	if err != nil || stok <= 0 {
-		return nil, errors.New("stok barang habis")
-	}
+    barang.Stok = strconv.Itoa(stok - 1)
+    _ = u.barangRepo.Update(barang)
 
-	newStok := strconv.Itoa(stok - 1)
-	barang.Stok = newStok
+    report := &models.TVMReport{
+        BarangID:    barang.ID,
+        TVMCode:     req.TVMCode,
+        Location:    req.Location,
+        IssueType:   req.IssueType,
+        Description: req.Description,
+        Priority:    req.Priority,
+        ImageURL:    imagePath, // Menyimpan path lokal ke database
+        Status:      models.StatusPending,
+        ReportedBy:  userID,
+    }
 
-	if err := u.barangRepo.Update(barang); err != nil {
-		return nil, errors.New("gagal update stok barang")
-	}
+    if err := u.repo.Create(report); err != nil {
+        return nil, err
+    }
 
-	report := &models.TVMReport{
-		BarangID:    barang.ID, 
-		TVMCode:     req.TVMCode,
-		Location:    req.Location,
-		IssueType:   req.IssueType,
-		Description: req.Description,
-		Priority:    priority,
-		ImageURL:    req.ImageURL,
-		Status:      models.StatusPending,
-		ReportedBy:  userID,
-	}
-
-	if err := u.repo.Create(report); err != nil {
-		return nil, err
-	}
-
-	return u.repo.FindByID(report.ID)
+    return u.repo.FindByID(report.ID)
 }
 
 func (u *tvmReportUsecase) GetReportByID(id uint) (*models.TVMReport, error) {
@@ -256,3 +252,31 @@ func (u *tvmReportUsecase) GetDashboard(userID uint) (map[string]interface{}, er
 		"latest_reports":    latestReports,
 	}, nil
 }
+
+func SaveUploadedImage(ctx *gin.Context, file *multipart.FileHeader) (string, error) {
+
+	// ✅ PASTIKAN FOLDER ADA
+	if err := os.MkdirAll("uploads/reports", 0755); err != nil {
+		return "", err
+	}
+
+	// Validasi ekstensi
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+		return "", errors.New("format gambar harus jpg, jpeg, atau png")
+	}
+
+	// Nama file unik
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+
+	path := "uploads/reports/" + filename
+
+	// ✅ SIMPAN FILE
+	if err := ctx.SaveUploadedFile(file, path); err != nil {
+		return "", err
+	}
+
+	return path, nil
+}
+
+
