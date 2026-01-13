@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 )
 
 func TestAdminUpdateUser(t *testing.T) {
@@ -73,4 +74,35 @@ func TestAdminCreateUser(t *testing.T) {
 	assert.Equal(t, "Created", user.FullName)
 	assert.Equal(t, models.RoleUser, user.Role)
 	assert.Equal(t, "0893344443", user.Phone)
+}
+
+func TestAdminDeleteUser(t *testing.T) {
+	r := GetRouter()
+
+	// Buat user dulu
+	userID := RegisterAndGetUserID(
+		t,
+		r,
+		"deletetest",
+		"deletetest@test.com",
+	)
+
+	token := LoginAsAdmin(t, r)
+
+	// Delete user
+	w := PerformRequest(
+		r,
+		"DELETE",
+		fmt.Sprintf("/api/v1/admin/users/%d", userID),
+		nil,
+		token,
+	)
+
+	assert.Equal(t, 200, w.Code)
+
+	// Pastikan user benar-benar terhapus
+	var user models.User
+	err := GetDB().First(&user, userID).Error
+	assert.Error(t, err)
+	assert.Equal(t, gorm.ErrRecordNotFound, err)
 }

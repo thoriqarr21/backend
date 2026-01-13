@@ -3,6 +3,7 @@ package tests
 import (
 	"backend/api"
 	"backend/config"
+
 	// "backend/models"
 	"os"
 	"testing"
@@ -45,7 +46,7 @@ func setupTestDB() {
 
 	// Reset data (AMAN)
 	db.Exec(`
-		TRUNCATE users, tvm_reports
+		TRUNCATE users, tvm_reports, barang
 		RESTART IDENTITY CASCADE
 	`)
 
@@ -58,7 +59,7 @@ func setupTestDB() {
 
 func cleanupTestDB() {
 	db.Exec(`
-		TRUNCATE users, tvm_reports
+		TRUNCATE users, tvm_reports, barang
 		RESTART IDENTITY CASCADE
 	`)
 }

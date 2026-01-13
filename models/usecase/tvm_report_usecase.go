@@ -19,7 +19,7 @@ type TVMReportUsecase interface {
 	CreateReport(req *models.CreateReportRequest, userID uint, imagePath string) (*models.TVMReport, error)
 	GetReportByID(id uint) (*models.TVMReport, error)
 	GetAllReports(filter *models.ReportFilterRequest) ([]models.TVMReport, int64, error)
-	UpdateReport(id uint, req *models.UpdateReportRequest, userID uint, userRole models.Role) (*models.TVMReport, error)
+	UpdateReport(id uint, req *models.UpdateReportRequest, userID uint, userRole models.Role, imagePath string) (*models.TVMReport, error)
 	DeleteReport(id uint, userRole models.Role) error
 	GetMyReports(userID uint) ([]models.TVMReport, error)
 	GetDashboard(userID uint) (map[string]interface{}, error)
@@ -97,30 +97,37 @@ func (u *tvmReportUsecase) GetAllReports(filter *models.ReportFilterRequest) ([]
 	return u.repo.GetAll(filter)
 }
 
-func (u *tvmReportUsecase) UpdateReport(id uint, req *models.UpdateReportRequest, userID uint, userRole models.Role) (*models.TVMReport, error) {
+func (u *tvmReportUsecase) UpdateReport(
+	id uint,
+	req *models.UpdateReportRequest,
+	userID uint,
+	userRole models.Role,
+	imagePath string, // hasil upload baru (opsional)
+) (*models.TVMReport, error) {
+
 	report, err := u.repo.FindByID(id)
 	if err != nil {
 		return nil, errors.New("report not found")
 	}
 
-	// Only admin or the reporter can update
+	// 🔐 Authorization
 	if userRole != models.RoleAdmin && report.ReportedBy != userID {
 		return nil, errors.New("unauthorized to update this report")
 	}
 
+	// 📝 Update fields (partial)
 	if req.TVMCode != "" {
 		report.TVMCode = req.TVMCode
 	}
 
-	// Update fields
 	if req.Status != "" {
 		report.Status = req.Status
+
 		if req.Status == models.StatusResolved {
 			now := time.Now()
 			report.ResolvedAt = &now
-			if req.ResolvedBy != nil {
-				report.ResolvedBy = req.ResolvedBy
-			} else {
+
+			if userRole == models.RoleAdmin {
 				report.ResolvedBy = &userID
 			}
 		}
@@ -135,9 +142,13 @@ func (u *tvmReportUsecase) UpdateReport(id uint, req *models.UpdateReportRequest
 	if req.Description != "" {
 		report.Description = req.Description
 	}
-
 	if req.Priority != "" {
 		report.Priority = req.Priority
+	}
+
+	// 🖼️ Update image (HANYA dari upload)
+	if imagePath != "" {
+		report.ImageURL = imagePath
 	}
 
 	if err := u.repo.Update(report); err != nil {

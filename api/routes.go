@@ -55,7 +55,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			users.GET("/profile", userController.GetProfile)
 			users.PUT("/profile/:id", userController.UpdateUser)
 			users.POST("/change-password", userController.ChangePassword)
-		}
+		} 
 
 		barang := v1.Group("/barang")
 		barang.Use(middleware.AuthMiddleware())
@@ -79,6 +79,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			admin.PUT("/reports/:id", tvmController.UpdateReport)
 			admin.DELETE("/reports/:id", tvmController.DeleteReport)
 			admin.GET("/barang", barangController.GetAllBarang)
+			admin.GET("/barang/:id", barangController.GetBarangByID)
 			admin.POST("/barang", barangController.CreateBarang)
 			admin.PUT("/barang/:id", barangController.UpdateBarang)
 			admin.DELETE("/barang/:id", barangController.DeleteBarang)
@@ -90,6 +91,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		{
 			// Endpoint ini sekarang mengharapkan multipart/form-data untuk upload file
 			reports.POST("/", tvmController.CreateReport) 
+			reports.POST("", tvmController.CreateReport) 
 			
 			reports.GET("/", tvmController.GetAllReports)
 			reports.PATCH("/:id/status", tvmController.UpdateStatusByPetugas)

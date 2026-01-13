@@ -40,6 +40,12 @@ func (r *barangRepository) GetAllBarang() ([]models.Barang, error) {
 	return barang, err
 }
 
+func (r *barangRepository) GetBarangByID(id uint) (*models.Barang, error) {
+	var barang models.Barang
+	err := r.db.First(&barang, id).Error
+	return &barang, err
+}
+
 func (r *barangRepository) Create(barang *models.Barang) error {
 	return r.db.Create(barang).Error
 }

@@ -8,6 +8,7 @@ import (
 
 type BarangUsecase interface {
 	GetAllBarang() ([]models.Barang, error)
+	GetBarangByID(id uint) (*models.Barang, error)
 	CreateBarang(req models.CreateBarangRequest) (*models.Barang, error)
 	UpdateBarang(id uint, req models.UpdateBarangRequest) (*models.Barang, error)
 	DeleteBarang(id uint) error
@@ -25,9 +26,13 @@ func (b *barangUsecase) GetAllBarang() ([]models.Barang, error) {
 	return b.repo.GetAllBarang()
 }
 
-func (u *barangUsecase) CreateBarang(req models.CreateBarangRequest) (*models.Barang, error) {
+func (b *barangUsecase) GetBarangByID(id uint) (*models.Barang, error) {
+	return b.repo.FindByID(id)
+}
+
+func (b *barangUsecase) CreateBarang(req models.CreateBarangRequest) (*models.Barang, error) {
 	// Check if username already exists
-	if _, err := u.repo.FindByNama_barang(req.Nama_barang); err == nil {
+	if _, err := b.repo.FindByNama_barang(req.Nama_barang); err == nil {
 		return nil, errors.New("username already exists")
 	}
 
@@ -37,7 +42,7 @@ func (u *barangUsecase) CreateBarang(req models.CreateBarangRequest) (*models.Ba
 		ImageURL:    req.ImageURL,
 	}
 
-	if err := u.repo.Create(barang); err != nil {
+	if err := b.repo.Create(barang); err != nil {
 		return nil, err
 	}
 

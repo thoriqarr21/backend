@@ -37,6 +37,23 @@ func seedUsers(r *gin.Engine) {
 	PerformRequest(r, "POST", "/api/v1/auth/register", user, "")
 }
 
+func SeedBarang(t *testing.T, r *gin.Engine) {
+	if r == nil {
+		panic("router cannot be nil when calling SeedBarang")
+	}
+
+	token := LoginAsAdmin(t, r)
+
+	barang := map[string]string{
+		"nama_barang": "Laptop",
+		"stok":        "10",
+		"image_url":   "https://example.com/laptop.jpg",
+	}
+
+	w := PerformRequest(r, "POST", "/api/v1/admin/barang", barang, token)
+	assert.Equal(t, 201, w.Code)
+}
+
 func LoginAsAdmin(t *testing.T, r http.Handler) string {
 	return login(t, r, "admin", "admin123")
 }

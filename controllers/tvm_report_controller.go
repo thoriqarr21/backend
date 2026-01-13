@@ -3,6 +3,7 @@ package controllers
 import (
 	"backend/models"
 	"backend/models/usecase"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -80,7 +81,53 @@ func (ctrl *TVMReportController) CreateReport(c *gin.Context) {
 	})
 }
 
+func (ctrl *TVMReportController) UpdateReport(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid report ID"})
+		return
+	}
 
+	var req models.UpdateReportRequest
+	if err := c.ShouldBindWith(&req, binding.FormMultipart); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+		// 🔍 Ambil file
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "image wajib diupload",
+		})
+		return
+	}
+
+	// 💾 Simpan gambar
+	imagePath, err := usecase.SaveUploadedImage(c, file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	userID, _ := c.Get("user_id")
+	user, _ := c.Get("user")
+	userRole := user.(models.User).Role
+
+	report, err := ctrl.usecase.UpdateReport(uint(id), &req, userID.(uint), userRole, imagePath)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.TvmReportResponse{
+		Status:  http.StatusOK,
+		Message: "Report updated successfully",
+		Data:    report,
+	})
+}
 
 func (ctrl *TVMReportController) GetReportByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
@@ -95,8 +142,26 @@ func (ctrl *TVMReportController) GetReportByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"report": report})
+	baseURL := fmt.Sprintf(
+		"%s://%s",
+		func() string {
+			if c.Request.TLS != nil {
+				return "https"
+			}
+			return "http"
+		}(),
+		c.Request.Host,
+	)
+
+	if report.ImageURL != "" {
+		report.ImageURL = baseURL + "/" + report.ImageURL
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"report": report,
+	})
 }
+
 
 func (ctrl *TVMReportController) GetAllReports(c *gin.Context) {
 	var filter models.ReportFilterRequest
@@ -111,41 +176,28 @@ func (ctrl *TVMReportController) GetAllReports(c *gin.Context) {
 		return
 	}
 
+	baseURL := fmt.Sprintf(
+		"%s://%s",
+		func() string {
+			if c.Request.TLS != nil {
+				return "https"
+			}
+			return "http"
+		}(),
+		c.Request.Host,
+	)
+
+	for i := range reports {
+		if reports[i].ImageURL != "" {
+			reports[i].ImageURL = baseURL + "/" + reports[i].ImageURL
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"reports": reports,
 		"total":   total,
 		"page":    filter.Page,
 		"limit":   filter.Limit,
-	})
-}
-
-func (ctrl *TVMReportController) UpdateReport(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid report ID"})
-		return
-	}
-
-	var req models.UpdateReportRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	userID, _ := c.Get("user_id")
-	user, _ := c.Get("user")
-	userRole := user.(models.User).Role
-
-	report, err := ctrl.usecase.UpdateReport(uint(id), &req, userID.(uint), userRole)
-	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, models.TvmReportResponse{
-		Status:  http.StatusOK,
-		Message: "Report updated successfully",
-		Data:    report,
 	})
 }
 
@@ -177,6 +229,22 @@ func (ctrl *TVMReportController) GetMyReports(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+		baseURL := fmt.Sprintf(
+		"%s://%s",
+		func() string {
+			if c.Request.TLS != nil {
+				return "https"
+			}
+			return "http"
+		}(),
+		c.Request.Host,
+	)
+
+	for i := range reports {
+		if reports[i].ImageURL != "" {
+			reports[i].ImageURL = baseURL + "/" + reports[i].ImageURL
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"reports": reports})

@@ -28,6 +28,21 @@ func (ctrl *BarangController) GetAllBarang(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"barang": barang})
 }
 
+func (ctrl *BarangController) GetBarangByID(c *gin.Context) {
+    id, err := strconv.Atoi(c.Param("id"))
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+        return
+    }
+    barang, err := ctrl.usecase.GetBarangByID(uint(id))
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"barang": barang})
+}
+
 func (ctrl *BarangController) CreateBarang(c *gin.Context) {
 	var req models.CreateBarangRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

@@ -56,18 +56,18 @@ type CreateReportRequest struct {
 
 
 type UpdateReportRequest struct {
-	BarangID    uint   `json:"barang_id" binding:"required"`
-	TVMCode     string `json:"tvm_code" binding:"required"`
-	Location    string `json:"location" binding:"required"`
-	IssueType   string `json:"issue_type" binding:"required"`
-	Description string `json:"description" binding:"required"`
-	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
-	Priority    string `json:"priority" binding:"omitempty,oneof=low medium high urgent"`
-	ResolvedBy  *uint          `json:"resolved_by,omitempty"`
-	ImageURL    string `json:"image_url"`
+	BarangID    uint   `form:"barang_id" binding:"required"`	
+	TVMCode     string `form:"tvm_code" binding:"required"`
+	Location    string `form:"location" binding:"required"`
+	IssueType   string `form:"issue_type" binding:"required"`
+	Description string `form:"description" binding:"required"`
+	Status      ReportStatus `form:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
+	Priority    string `form:"priority" binding:"omitempty,oneof=low medium high urgent"`
+	ResolvedBy  *uint  `form:"resolved_by,omitempty"`
+	// ImageURL    string `json:"image_url,omitempty"`
 }
 
-type ReportFilterRequest struct {
+type ReportFilterRequest struct { 
 	Status     string `form:"status"`
 	Priority   string `form:"priority"`
 	TVMCode    string `form:"tvm_code"`
