@@ -294,12 +294,33 @@ func (ctrl *TVMReportController) UpdateStatusByPetugas(c *gin.Context) {
 }
 
 func (c *TVMReportController) GetDashboard(ctx *gin.Context) {
-	userID, _ := ctx.Get("user_id")
-	data, err := c.usecase.GetDashboard(userID.(uint))
-	if err != nil {
-		ctx.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
+    userID, _ := ctx.Get("user_id")
+    data, err := c.usecase.GetDashboard(userID.(uint))
+    if err != nil {
+        ctx.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
 
-	ctx.JSON(200, data)
+    baseURL := fmt.Sprintf(
+        "%s://%s",
+        func() string {
+            if ctx.Request.TLS != nil {
+                return "https"
+            }
+            return "http"
+        }(),
+        ctx.Request.Host,
+    )
+
+    // Process latest_reports to update ImageURL if it exists
+    if latestReports, ok := data["latest_reports"].([]models.TVMReport); ok {
+        for i := range latestReports {
+            if latestReports[i].ImageURL != "" {
+                latestReports[i].ImageURL = baseURL + "/" + latestReports[i].ImageURL
+            }
+        }
+        data["latest_reports"] = latestReports
+    }
+
+    ctx.JSON(200, data)
 }
