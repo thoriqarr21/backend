@@ -207,11 +207,7 @@ func (r *tvmReportRepository) CountReportsPerMonth() ([]map[string]interface{}, 
 
 func (r *tvmReportRepository) GetLatestReports(limit int) ([]models.TVMReport, error) {
 	var reports []models.TVMReport
-
-	err := r.db.
-		Order("created_at DESC").
-		Limit(limit).
-		Find(&reports).Error
+	err := r.db.Preload("Reporter").Preload("Resolver").Order("created_at DESC").Limit(limit).Find(&reports).Error
 
 	return reports, err
 }
