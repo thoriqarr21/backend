@@ -2,6 +2,8 @@ package repository
 
 import (
 	"backend/models"
+	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -20,6 +22,10 @@ type TVMReportRepository interface {
 	CountReportsByStatus() (map[string]int64, error)
 	CountReportsPerMonth() ([]map[string]interface{}, error)
 	GetLatestReports(limit int) ([]models.TVMReport, error)
+	GetOpenReports() ([]models.TVMReport, error)
+	TakeReport(reportID uint, teknisiID uint) error
+	GetReportsByTechnician(teknisiID uint) ([]models.TVMReport, error)
+	ResolveReport(reportID uint, teknisiID uint, note string) error
 }
 
 type tvmReportRepository struct {
@@ -49,12 +55,15 @@ func (r *tvmReportRepository) Create(report *models.TVMReport) error {
 
 func (r *tvmReportRepository) FindByID(id uint) (*models.TVMReport, error) {
 	var report models.TVMReport
-	err := r.db.Preload("Reporter").Preload("Resolver").First(&report, id).Error
+	err := r.db.Preload("Reporter").Preload("Resolver").Preload("Histories", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC")
+		}).First(&report, id).Error
 	if err != nil {
 		return nil, err
 	}
 	return &report, nil
 }
+
 
 func (r *tvmReportRepository) GetAll(filter *models.ReportFilterRequest) ([]models.TVMReport, int64, error) {
 	var reports []models.TVMReport
@@ -212,3 +221,59 @@ func (r *tvmReportRepository) GetLatestReports(limit int) ([]models.TVMReport, e
 	return reports, err
 }
 
+// models/repository/tvm_report_repository.go
+func (r *tvmReportRepository) GetOpenReports() ([]models.TVMReport, error) {
+	var reports []models.TVMReport
+	err := r.db.
+		Where("status = ? AND assigned_to IS NULL", models.StatusOpen).
+		Order("created_at ASC").
+		Find(&reports).Error
+	return reports, err
+}
+
+func (r *tvmReportRepository) TakeReport(reportID uint, teknisiID uint) error {
+	result := r.db.Model(&models.TVMReport{}).
+		Where("id = ? AND status = ? AND assigned_to IS NULL",
+			reportID, models.StatusOpen).
+		Updates(map[string]interface{}{
+			"assigned_to": teknisiID,
+			"assigned_at": time.Now(),
+			"status":      models.StatusInProgress,
+		})
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("laporan sudah diambil atau tidak tersedia")
+	}
+	return result.Error
+}
+
+func (r *tvmReportRepository) GetReportsByTechnician(teknisiID uint) ([]models.TVMReport, error) {
+	var reports []models.TVMReport
+	query := r.db.Model(&models.TVMReport{}).Preload("Reporter").Preload("Resolver").Preload("Barang").Preload("Assigned")
+	err := query.
+		Where("assigned_to = ?", teknisiID).
+		Order("created_at DESC").
+		Find(&reports).Error
+	return reports, err
+}
+
+// TEKNISI - Resolve Report
+func (r *tvmReportRepository) ResolveReport(reportID uint, teknisiID uint, note string) error {
+	result := r.db.Model(&models.TVMReport{}).
+		Where("id = ? AND status = ? AND assigned_to = ?",
+			reportID,
+			models.StatusInProgress,
+			teknisiID,
+		).
+		Updates(map[string]interface{}{
+			"status":        models.StatusResolved,
+			"resolved_by":   teknisiID,
+			"resolved_at":   time.Now(),
+			"resolved_note": note,
+		})
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("laporan tidak dapat diselesaikan")
+	}
+	return result.Error
+}

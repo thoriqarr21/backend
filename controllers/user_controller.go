@@ -116,7 +116,11 @@ func (ctrl *UserController) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	c.JSON(http.StatusOK, models.UserResponse{
+		Status:  http.StatusOK,
+		Message: "User retrieved successfully",
+		Data:    user,
+	})
 }
 
 func (ctrl *UserController) CreateUser(c *gin.Context) {

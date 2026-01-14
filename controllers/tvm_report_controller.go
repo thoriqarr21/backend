@@ -274,12 +274,19 @@ func (ctrl *TVMReportController) UpdateStatusByPetugas(c *gin.Context) {
 	}
 
 	userID, _ := c.Get("user_id")
-	// user, _ := c.Get("user")
+	roleVal, exists := c.Get("role")
+	if !exists {
+		c.JSON(http.StatusForbidden, gin.H{"error": "role not found"})
+		return
+	}
+
+	userRole := models.Role(roleVal.(string))
 
 	report, err := ctrl.usecase.UpdateReportStatusByPetugas(
 		uint(id),
 		req.Status,
 		userID.(uint),
+		userRole,
 	)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
@@ -323,4 +330,82 @@ func (c *TVMReportController) GetDashboard(ctx *gin.Context) {
     }
 
     ctx.JSON(200, data)
+}
+
+// controllers/tvm_report_controller.go
+
+// 🔓 List laporan OPEN
+func (c *TVMReportController) GetOpenReports(ctx *gin.Context) {
+	reports, err := c.usecase.GetOpenReports()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, reports)
+}
+
+// 🔒 Ambil laporan
+func (c *TVMReportController) TakeReport(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Param("id"))
+
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	err := c.usecase.TakeReport(uint(id), userID.(uint))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "laporan berhasil diambil"})
+}
+
+func (c *TVMReportController) OpenReport(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Param("id"))
+
+	err := c.usecase.OpenReport(uint(id))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "laporan berhasil dibuka",
+	})
+}
+
+func (ctrl *TVMReportController) GetMyReportsAsTechnician(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+
+	reports, err := ctrl.usecase.GetMyReportsAsTechnician(userID.(uint))
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"reports": reports})
+}
+
+func (c *TVMReportController) ResolveReport(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Param("id"))
+	teknisiID, _ := ctx.Get("user_id")
+
+	var req struct {
+		Note string `json:"note"`
+	}
+
+	ctx.ShouldBindJSON(&req)
+
+	err := c.usecase.ResolveReport(uint(id), teknisiID.(uint), req.Note)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "laporan berhasil diselesaikan"})
 }

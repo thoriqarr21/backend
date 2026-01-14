@@ -85,7 +85,7 @@ func (u *userUsecase) Login(req *models.LoginRequest) (*models.LoginResponse, er
 	}
 
 	// Generate JWT token
-	token, err := generateToken(user.ID)
+	token, err := generateToken(user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -230,13 +230,14 @@ func (u *userUsecase) ChangePassword(userID uint, req *models.ChangePasswordRequ
 	return u.repo.Update(user)
 }
 
-func generateToken(userID uint) (string, error) {
+func generateToken(userID uint, role models.Role) (string, error) {
     // Token expires in 24 hours
     expirationTime := time.Now().Add(24 * time.Hour)
     
-    // Create the JWT claims, which includes the user ID and expiry time
+    // Create the JWT claims, which includes the user ID, role and expiry time
     claims := &middleware.CustomClaims{
         UserID: userID,
+		Role:   string(role),
         RegisteredClaims: jwt.RegisteredClaims{
             // In JWT, the expiry time is expressed as unix milliseconds
             ExpiresAt: jwt.NewNumericDate(expirationTime),

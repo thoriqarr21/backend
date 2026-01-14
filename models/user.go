@@ -11,7 +11,8 @@ type Role string
 
 const (
 	RoleAdmin Role = "admin"
-	RoleUser  Role = "user" // Petugas
+	RoleUser  Role = "user"
+	RoleTeknisi  Role = "teknisi"
 )
 
 type UserResponse struct {
@@ -42,7 +43,7 @@ type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
 	FullName string `json:"full_name" binding:"required"`
-	Role     Role   `json:"role" binding:"omitempty,oneof=admin user"`
+	Role     Role   `json:"role" binding:"omitempty,oneof=admin user teknisi"`
 	Phone    string `json:"phone" binding:"required"`
 }
 
@@ -57,14 +58,14 @@ type CreateUserRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 	FullName string `json:"full_name" binding:"required"`
 	Phone    string `json:"phone" binding:"required"`
-	Role     Role   `json:"role" binding:"omitempty,oneof=admin user"`
+	Role     Role   `json:"role" binding:"omitempty,oneof=admin user teknisi"`
 }
 
 type UpdateUserRequest struct {
 	Username string `json:"username" binding:"omitempty,min=3"`
 	Email    string `json:"email" binding:"omitempty,email"`
 	FullName string `json:"full_name" binding:"omitempty"`
-	Role     Role   `json:"role" binding:"omitempty,oneof=admin user"`
+	Role     Role   `json:"role" binding:"omitempty,oneof=admin user teknisi"`
 	Phone 	 string `json:"phone" binding:"omitempty"`
 }
 

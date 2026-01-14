@@ -8,6 +8,7 @@ type ReportStatus string
 
 const (
 	StatusPending    ReportStatus = "pending"
+	StatusOpen       ReportStatus = "open"
 	StatusInProgress ReportStatus = "in_progress"
 	StatusResolved   ReportStatus = "resolved"
 	StatusRejected   ReportStatus = "rejected"
@@ -35,7 +36,12 @@ type TVMReport struct {
 	ResolvedBy  *uint          `gorm:"column:resolved_by" json:"resolved_by,omitempty"`
 	Resolver    *User          `gorm:"foreignKey:ResolvedBy" json:"resolver,omitempty"`
 	ResolvedAt  *time.Time     `gorm:"column:resolved_at" json:"resolved_at,omitempty"`
+	ResolvedNote *string       `gorm:"type:text;column:resolved_note" json:"resolved_note,omitempty"`
+	AssignedTo  *uint          `gorm:"column:assigned_to" json:"assigned_to,omitempty"`
+	Assigned    *User          `gorm:"foreignKey:AssignedTo" json:"assigned,omitempty"`
+	AssignedAt  *time.Time     `gorm:"column:assigned_at" json:"assigned_at,omitempty"`
 	// Notes       string         `gorm:"type:text;column:notes" json:"notes,omitempty"`
+	Histories []TVMReportHistory `gorm:"foreignKey:TVMReportID"`
 	CreatedAt   time.Time      `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -64,6 +70,7 @@ type UpdateReportRequest struct {
 	Status      ReportStatus `form:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
 	Priority    string `form:"priority" binding:"omitempty,oneof=low medium high urgent"`
 	ResolvedBy  *uint  `form:"resolved_by,omitempty"`
+	ResolvedNote *string `form:"resolved_note,omitempty"`
 	// ImageURL    string `json:"image_url,omitempty"`
 }
 
@@ -77,5 +84,6 @@ type ReportFilterRequest struct {
 }
 
 type UpdateReportStatusRequest struct {
-	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
+	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending open in_progress resolved rejected"`
+	AssignedTo  *uint        `json:"assigned_to,omitempty"`
 }

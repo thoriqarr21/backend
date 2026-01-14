@@ -29,6 +29,10 @@ CREATE TABLE tvm_reports (
     reported_by BIGINT NOT NULL,
     resolved_by BIGINT DEFAULT NULL,
     resolved_at TIMESTAMP(3) DEFAULT NULL,
+    resolved_note TEXT DEFAULT NULL, 
+    assigned_to BIGINT DEFAULT NULL, -- 🔥 teknisi
+    assigned_at TIMESTAMP(3) DEFAULT NULL,
+    
     -- notes TEXT,
     created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP

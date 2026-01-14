@@ -28,19 +28,26 @@ type TVMReportUsecase interface {
 		id uint,
 		status models.ReportStatus,
 		userID uint,
+		userRole models.Role,
 	) (*models.TVMReport, error)
-
+	TakeReport(reportID uint, teknisiID uint) error
+	GetOpenReports() ([]models.TVMReport, error)
+	OpenReport(reportID uint) error
+	GetMyReportsAsTechnician(userID uint) ([]models.TVMReport, error)
+	ResolveReport(reportID uint, teknisiID uint, note string) error
 }
 
 type tvmReportUsecase struct {
 	repo    repository.TVMReportRepository
 	barangRepo repository.BarangRepository
+	historyRepo repository.TVMReportHistoryRepository
 }
 
-func NewTVMReportUsecase(repo repository.TVMReportRepository, barangRepo repository.BarangRepository) TVMReportUsecase {
+func NewTVMReportUsecase(repo repository.TVMReportRepository, barangRepo repository.BarangRepository, historyRepo repository.TVMReportHistoryRepository) TVMReportUsecase {
 	return &tvmReportUsecase{
 		repo:      repo,
 		barangRepo: barangRepo,
+		historyRepo: historyRepo,
 	}
 }
 
@@ -184,49 +191,88 @@ func (u *tvmReportUsecase) UpdateReportStatusByPetugas(
 	id uint,
 	status models.ReportStatus,
 	userID uint,
+	userRole models.Role,
 ) (*models.TVMReport, error) {
-
 
 	report, err := u.repo.FindByID(id)
 	if err != nil {
 		return nil, errors.New("report not found")
 	}
 
-	// 🔁 VALIDASI ALUR STATUS
-	switch report.Status {
-	case models.StatusPending:
-		if status != models.StatusInProgress {
-			return nil, errors.New("status tidak valid")
+	// 🔴 SIMPAN STATUS LAMA UNTUK HISTORY
+	oldStatus := report.Status
+
+	switch userRole {
+
+	// 🧑‍💼 PETUGAS
+	case models.RoleUser:
+		if !(report.Status == models.StatusPending && status == models.StatusOpen) {
+			return nil, fmt.Errorf("invalid status transition for petugas")
+		}
+		report.Status = status
+
+	// 🧑‍🔧 TEKNISI
+	case models.RoleTeknisi:
+
+		// 📌 Ambil laporan
+		if report.Status == models.StatusOpen && status == models.StatusInProgress {
+
+			if report.AssignedTo != nil {
+				return nil, fmt.Errorf("laporan sudah diambil teknisi lain")
+			}
+
+			now := time.Now()
+			report.Status = models.StatusInProgress
+			report.AssignedTo = &userID
+			report.AssignedAt = &now
+
+		// 📌 Selesaikan laporan
+		} else if report.Status == models.StatusInProgress && status == models.StatusResolved {
+
+			if report.AssignedTo == nil || *report.AssignedTo != userID {
+				return nil, fmt.Errorf("anda bukan teknisi yang menangani laporan ini")
+			}
+
+			now := time.Now()
+			report.Status = models.StatusResolved
+			report.ResolvedAt = &now
+			report.ResolvedBy = &userID
+
+		} else {
+			return nil, fmt.Errorf("invalid status transition for teknisi")
 		}
 
-	case models.StatusInProgress:
-		if status != models.StatusResolved {
-			return nil, errors.New("status tidak valid")
+	// 🧑‍💼 ADMIN
+	case models.RoleAdmin:
+		if status != models.StatusRejected && status != models.StatusOpen {
+			return nil, fmt.Errorf("invalid status transition for admin")
 		}
-
-	case models.StatusResolved:
-		return nil, errors.New("report sudah selesai")
+		report.Status = status
 
 	default:
-		return nil, errors.New("status tidak dikenal")
+		return nil, fmt.Errorf("invalid role")
 	}
 
-	// ✅ UPDATE STATUS
-	report.Status = status
-
-	// ⏰ JIKA RESOLVED
-	if status == models.StatusResolved {
-		now := time.Now()
-		report.ResolvedAt = &now
-		report.ResolvedBy = &userID
-	}
-
+	// ✅ UPDATE REPORT
 	if err := u.repo.Update(report); err != nil {
 		return nil, err
 	}
 
+	// 🕒 SIMPAN HISTORY
+	history := &models.TVMReportHistory{
+		TVMReportID: report.ID,
+		FromStatus:  oldStatus,
+		ToStatus:    report.Status,
+		ChangedBy:   userID,
+		Role:        userRole,
+	}
+
+	_ = u.historyRepo.Create(history)
+
 	return u.repo.FindByID(report.ID)
 }
+
+
 
 func (u *tvmReportUsecase) GetDashboard(userID uint) (map[string]interface{}, error) {
 
@@ -289,5 +335,40 @@ func SaveUploadedImage(ctx *gin.Context, file *multipart.FileHeader) (string, er
 
 	return path, nil
 }
+
+func (u *tvmReportUsecase) GetOpenReports() ([]models.TVMReport, error) {
+	return u.repo.GetOpenReports()
+}
+
+func (u *tvmReportUsecase) TakeReport(reportID uint, teknisiID uint) error {
+	return u.repo.TakeReport(reportID, teknisiID)
+}
+
+func (u *tvmReportUsecase) OpenReport(reportID uint) error {
+	report, err := u.repo.FindByID(reportID)
+	if err != nil {
+		return errors.New("laporan tidak ditemukan")
+	}
+
+	if report.Status != models.StatusPending {
+		return errors.New("laporan tidak bisa dibuka")
+	}
+
+	report.Status = models.StatusOpen
+	return u.repo.Update(report)
+}
+
+func (u *tvmReportUsecase) GetMyReportsAsTechnician(teknisiID uint) ([]models.TVMReport, error) {
+	return u.repo.GetReportsByTechnician(teknisiID)
+}
+
+func (u *tvmReportUsecase) ResolveReport(
+	reportID uint,
+	teknisiID uint,
+	note string,
+) error {
+	return u.repo.ResolveReport(reportID, teknisiID, note)
+}
+
 
 

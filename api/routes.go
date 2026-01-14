@@ -26,10 +26,14 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 	barangUsecase := usecase.NewBarangUsecase(barangRepo)
 	barangController := controllers.NewBarangController(barangUsecase)
 
+	historyRepo := repository.NewTVMReportHistoryRepository(db)
+	historyUsecase := usecase.NewTVMReportHistoryUsecase(historyRepo)
+	historyController := controllers.NewTVMReportHistoryController(historyUsecase)
 
 	tvmRepo := repository.NewTVMReportRepository(db)
-	tvmUsecase := usecase.NewTVMReportUsecase(tvmRepo, barangRepo)
+	tvmUsecase := usecase.NewTVMReportUsecase(tvmRepo, barangRepo, historyRepo)
 	tvmController := controllers.NewTVMReportController(tvmUsecase)
+
 
 	// --- API v1 GROUP ---
 	v1 := r.Group("/api/v1")
@@ -77,12 +81,23 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			admin.GET("/dashboard", tvmController.GetDashboard)
 			admin.GET("/reports", tvmController.GetAllReports)
 			admin.PUT("/reports/:id", tvmController.UpdateReport)
+			admin.PATCH("/reports/:id/open", tvmController.OpenReport)
 			admin.DELETE("/reports/:id", tvmController.DeleteReport)
 			admin.GET("/barang", barangController.GetAllBarang)
 			admin.GET("/barang/:id", barangController.GetBarangByID)
 			admin.POST("/barang", barangController.CreateBarang)
 			admin.PUT("/barang/:id", barangController.UpdateBarang)
 			admin.DELETE("/barang/:id", barangController.DeleteBarang)
+		}
+		// routes/api.go
+		teknisi := v1.Group("/teknisi")
+		teknisi.Use(middleware.AuthMiddleware())
+		teknisi.Use(middleware.RoleMiddleware(db, models.RoleTeknisi))
+		{
+			teknisi.GET("/reports/open", tvmController.GetOpenReports)
+			teknisi.PATCH("/reports/:id/take", tvmController.TakeReport)
+			teknisi.GET("/reports/my", tvmController.GetMyReportsAsTechnician)
+			teknisi.PUT("/reports/:id/resolve", tvmController.ResolveReport)
 		}
 
 		// Protected routes - TVM Reports (User & Admin)
@@ -92,7 +107,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			// Endpoint ini sekarang mengharapkan multipart/form-data untuk upload file
 			reports.POST("/", tvmController.CreateReport) 
 			reports.POST("", tvmController.CreateReport) 
-			
+			reports.GET("/:id/history", historyController.GetByReportID)
+			reports.GET("/history", historyController.GetAll)
+			reports.GET("/:id/historyuser", historyController.FindByChangedBy)
 			reports.GET("/", tvmController.GetAllReports)
 			reports.PATCH("/:id/status", tvmController.UpdateStatusByPetugas)
 			reports.GET("/my", tvmController.GetMyReports)
