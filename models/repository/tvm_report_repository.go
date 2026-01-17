@@ -25,7 +25,7 @@ type TVMReportRepository interface {
 	GetOpenReports() ([]models.TVMReport, error)
 	TakeReport(reportID uint, teknisiID uint) error
 	GetReportsByTechnician(teknisiID uint) ([]models.TVMReport, error)
-	ResolveReport(reportID uint, teknisiID uint, note string) error
+	ResolveReport(reportID uint, teknisiID uint) error
 }
 
 type tvmReportRepository struct {
@@ -225,7 +225,7 @@ func (r *tvmReportRepository) GetLatestReports(limit int) ([]models.TVMReport, e
 func (r *tvmReportRepository) GetOpenReports() ([]models.TVMReport, error) {
 	var reports []models.TVMReport
 	err := r.db.
-		Where("status = ? AND assigned_to IS NULL", models.StatusOpen).
+		Where("status = ? AND assigned_to IS NULL", models.StatusPending).
 		Order("created_at ASC").
 		Find(&reports).Error
 	return reports, err
@@ -234,7 +234,7 @@ func (r *tvmReportRepository) GetOpenReports() ([]models.TVMReport, error) {
 func (r *tvmReportRepository) TakeReport(reportID uint, teknisiID uint) error {
 	result := r.db.Model(&models.TVMReport{}).
 		Where("id = ? AND status = ? AND assigned_to IS NULL",
-			reportID, models.StatusOpen).
+			reportID, models.StatusPending).
 		Updates(map[string]interface{}{
 			"assigned_to": teknisiID,
 			"assigned_at": time.Now(),
@@ -258,7 +258,7 @@ func (r *tvmReportRepository) GetReportsByTechnician(teknisiID uint) ([]models.T
 }
 
 // TEKNISI - Resolve Report
-func (r *tvmReportRepository) ResolveReport(reportID uint, teknisiID uint, note string) error {
+func (r *tvmReportRepository) ResolveReport(reportID uint, teknisiID uint) error {
 	result := r.db.Model(&models.TVMReport{}).
 		Where("id = ? AND status = ? AND assigned_to = ?",
 			reportID,
@@ -266,10 +266,9 @@ func (r *tvmReportRepository) ResolveReport(reportID uint, teknisiID uint, note 
 			teknisiID,
 		).
 		Updates(map[string]interface{}{
-			"status":        models.StatusResolved,
-			"resolved_by":   teknisiID,
-			"resolved_at":   time.Now(),
-			"resolved_note": note,
+			"status":      models.StatusResolved,
+			"resolved_by": teknisiID,
+			"resolved_at": time.Now(),
 		})
 
 	if result.RowsAffected == 0 {

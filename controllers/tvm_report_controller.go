@@ -354,7 +354,35 @@ func (c *TVMReportController) TakeReport(ctx *gin.Context) {
 		return
 	}
 
-	err := c.usecase.TakeReport(uint(id), userID.(uint))
+	status := models.StatusInProgress 
+	err := c.usecase.TakeReport(
+		uint(id),
+		userID.(uint),
+		status,
+	)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "laporan berhasil diambil"})
+}
+
+func (c *TVMReportController) ResolveReport(ctx *gin.Context) {
+	id, _ := strconv.Atoi(ctx.Param("id"))
+
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	status := models.StatusResolved
+	err := c.usecase.ResolveReport(
+		uint(id),
+		userID.(uint),
+		status,
+	)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -391,21 +419,21 @@ func (ctrl *TVMReportController) GetMyReportsAsTechnician(c *gin.Context) {
 	c.JSON(200, gin.H{"reports": reports})
 }
 
-func (c *TVMReportController) ResolveReport(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
-	teknisiID, _ := ctx.Get("user_id")
+// func (c *TVMReportController) ResolveReport(ctx *gin.Context) {
+// 	id, _ := strconv.Atoi(ctx.Param("id"))
+// 	teknisiID, _ := ctx.Get("user_id")
 
-	var req struct {
-		Note string `json:"note"`
-	}
+// 	var req struct {
+// 		Note string `json:"note"`
+// 	}
 
-	ctx.ShouldBindJSON(&req)
+// 	ctx.ShouldBindJSON(&req)
 
-	err := c.usecase.ResolveReport(uint(id), teknisiID.(uint), req.Note)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+// 	err := c.usecase.ResolveReport(uint(id), teknisiID.(uint), req.Note)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "laporan berhasil diselesaikan"})
-}
+// 	ctx.JSON(http.StatusOK, gin.H{"message": "laporan berhasil diselesaikan"})
+// }

@@ -8,7 +8,7 @@ type ReportStatus string
 
 const (
 	StatusPending    ReportStatus = "pending"
-	StatusOpen       ReportStatus = "open"
+	// StatusOpen       ReportStatus = "open"
 	StatusInProgress ReportStatus = "in_progress"
 	StatusResolved   ReportStatus = "resolved"
 	StatusRejected   ReportStatus = "rejected"
@@ -84,6 +84,6 @@ type ReportFilterRequest struct {
 }
 
 type UpdateReportStatusRequest struct {
-	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending open in_progress resolved rejected"`
+	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
 	AssignedTo  *uint        `json:"assigned_to,omitempty"`
 }
