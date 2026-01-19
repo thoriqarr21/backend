@@ -24,6 +24,7 @@ type UserUsecase interface {
 	UpdateUser(id uint, req *models.UpdateUserRequest, currentUserID uint, currentUserRole models.Role) (*models.User, error)
 	DeleteUser(id uint, currentUserRole models.Role) error
 	ChangePassword(userID uint, req *models.ChangePasswordRequest) error
+	ResetPassword(userID uint, req *models.ResetPasswordRequest) error
 }
 
 type userUsecase struct {
@@ -218,6 +219,22 @@ func (u *userUsecase) ChangePassword(userID uint, req *models.ChangePasswordRequ
 	// Verify old password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
 		return errors.New("old password is incorrect")
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(hashedPassword)
+	return u.repo.Update(user)
+}
+
+func (u *userUsecase) ResetPassword(userID uint, req *models.ResetPasswordRequest) error {
+	user, err := u.repo.FindByID(userID)
+	if err != nil {
+		return errors.New("user not found")
 	}
 
 	// Hash new password

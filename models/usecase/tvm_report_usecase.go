@@ -31,7 +31,7 @@ type TVMReportUsecase interface {
 		userRole models.Role,
 	) (*models.TVMReport, error)
 	TakeReport(reportID uint, teknisiID uint, status models.ReportStatus) error
-	GetOpenReports() ([]models.TVMReport, error)
+	GetPendingReports() ([]models.TVMReport, error)
 	OpenReport(reportID uint) error
 	GetMyReportsAsTechnician(userID uint) ([]models.TVMReport, error)
 	ResolveReport(reportID uint, teknisiID uint, status models.ReportStatus) error
@@ -336,8 +336,8 @@ func SaveUploadedImage(ctx *gin.Context, file *multipart.FileHeader) (string, er
 	return path, nil
 }
 
-func (u *tvmReportUsecase) GetOpenReports() ([]models.TVMReport, error) {
-	return u.repo.GetOpenReports()
+func (u *tvmReportUsecase) GetPendingReports() ([]models.TVMReport, error) {
+	return u.repo.GetPendingReports()
 }
 
 func (u *tvmReportUsecase) TakeReport(reportID uint, teknisiID uint, status models.ReportStatus) error {

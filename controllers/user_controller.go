@@ -236,3 +236,23 @@ func (ctrl *UserController) ChangePassword(c *gin.Context) {
 		Message: "Password changed successfully",
 	})
 }
+
+func (ctrl *UserController) ResetPassword(c *gin.Context) {
+	var req models.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID, _ := c.Get("user_id")
+
+	if err := ctrl.usecase.ResetPassword(userID.(uint), &req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.UserResponse{
+		Status:  http.StatusOK,
+		Message: "Password reset successfully",
+	})
+}

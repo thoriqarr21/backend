@@ -334,9 +334,9 @@ func (c *TVMReportController) GetDashboard(ctx *gin.Context) {
 
 // controllers/tvm_report_controller.go
 
-// 🔓 List laporan OPEN
-func (c *TVMReportController) GetOpenReports(ctx *gin.Context) {
-	reports, err := c.usecase.GetOpenReports()
+// 🔓 List laporan PENDING
+func (c *TVMReportController) GetPendingReports(ctx *gin.Context) {
+	reports, err := c.usecase.GetPendingReports()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

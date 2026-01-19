@@ -22,7 +22,7 @@ type TVMReportRepository interface {
 	CountReportsByStatus() (map[string]int64, error)
 	CountReportsPerMonth() ([]map[string]interface{}, error)
 	GetLatestReports(limit int) ([]models.TVMReport, error)
-	GetOpenReports() ([]models.TVMReport, error)
+	GetPendingReports() ([]models.TVMReport, error)
 	TakeReport(reportID uint, teknisiID uint) error
 	GetReportsByTechnician(teknisiID uint) ([]models.TVMReport, error)
 	ResolveReport(reportID uint, teknisiID uint) error
@@ -222,10 +222,13 @@ func (r *tvmReportRepository) GetLatestReports(limit int) ([]models.TVMReport, e
 }
 
 // models/repository/tvm_report_repository.go
-func (r *tvmReportRepository) GetOpenReports() ([]models.TVMReport, error) {
+func (r *tvmReportRepository) GetPendingReports() ([]models.TVMReport, error) {
 	var reports []models.TVMReport
 	err := r.db.
-		Where("status = ? AND assigned_to IS NULL", models.StatusPending).
+		Where(
+			"status = ? AND (assigned_to IS NULL OR assigned_to IS NOT NULL)",
+			models.StatusPending,
+		).
 		Order("created_at ASC").
 		Find(&reports).Error
 	return reports, err

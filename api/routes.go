@@ -59,6 +59,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			users.GET("/profile", userController.GetProfile)
 			users.PUT("/profile/:id", userController.UpdateUser)
 			users.POST("/change-password", userController.ChangePassword)
+			users.POST("/reset-password", userController.ResetPassword)
 		} 
 
 		barang := v1.Group("/barang")
@@ -94,7 +95,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 		teknisi.Use(middleware.AuthMiddleware())
 		teknisi.Use(middleware.RoleMiddleware(db, models.RoleTeknisi))
 		{
-			teknisi.GET("/reports/open", tvmController.GetOpenReports)
+			teknisi.GET("/reports/pending", tvmController.GetPendingReports)
 			teknisi.PATCH("/reports/:id/take", tvmController.TakeReport)
 			teknisi.GET("/reports/my", tvmController.GetMyReportsAsTechnician)
 			teknisi.PUT("/reports/:id/resolve", tvmController.ResolveReport)
