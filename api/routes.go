@@ -77,6 +77,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB) {
 			admin.POST("/users", userController.CreateUser)
 			admin.GET("/users/:id", userController.GetUserByID)
 			admin.PUT("/users/:id", userController.UpdateUser)
+			admin.POST("/users/:id/reset-password", userController.AdminResetPassword)
 			admin.DELETE("/users/:id", userController.DeleteUser)
 			admin.GET("/reports/statistics", tvmController.GetStatistics)
 			admin.GET("/dashboard", tvmController.GetDashboard)

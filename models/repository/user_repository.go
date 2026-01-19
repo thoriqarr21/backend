@@ -14,6 +14,7 @@ type UserRepository interface {
 	GetAll() ([]models.User, error)
 	Update(user *models.User) error
 	Delete(id uint) error
+	UpdatePassword(user *models.User) error
 }
 
 type userRepository struct {
@@ -67,4 +68,10 @@ func (r *userRepository) Update(user *models.User) error {
 
 func (r *userRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
+}
+
+func (r *userRepository) UpdatePassword(user *models.User) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", user.ID).
+		Update("password", user.Password).Error
 }

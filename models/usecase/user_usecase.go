@@ -25,6 +25,7 @@ type UserUsecase interface {
 	DeleteUser(id uint, currentUserRole models.Role) error
 	ChangePassword(userID uint, req *models.ChangePasswordRequest) error
 	ResetPassword(userID uint, req *models.ResetPasswordRequest) error
+	AdminResetPassword(userID uint, newPassword string) error
 }
 
 type userUsecase struct {
@@ -277,4 +278,24 @@ func generateToken(userID uint, role models.Role) (string, error) {
     // Create the JWT string
     return token.SignedString([]byte(secret))
 }
+
+func (u *userUsecase) AdminResetPassword(userID uint, newPassword string) error {
+	user, err := u.repo.FindByID(userID)
+	if err != nil {
+		return errors.New("user tidak ditemukan")
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword(
+		[]byte(newPassword),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(hashed)
+
+	return u.repo.UpdatePassword(user)
+}
+
 

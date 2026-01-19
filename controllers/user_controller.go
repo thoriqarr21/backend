@@ -256,3 +256,33 @@ func (ctrl *UserController) ResetPassword(c *gin.Context) {
 		Message: "Password reset successfully",
 	})
 }
+
+func (ctrl *UserController) AdminResetPassword(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	var req models.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	adminRole := c.MustGet("user").(models.User).Role
+	if adminRole != models.RoleAdmin {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	if err := ctrl.usecase.AdminResetPassword(uint(id), req.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.UserResponse{
+		Status:  http.StatusOK,
+		Message: "Password reset successfully",
+	})
+}
