@@ -19,7 +19,7 @@ type TVMReportUsecase interface {
 	CreateReport(req *models.CreateReportRequest, userID uint, imagePath string) (*models.TVMReport, error)
 	GetReportByID(id uint) (*models.TVMReport, error)
 	GetAllReports(filter *models.ReportFilterRequest) ([]models.TVMReport, int64, error)
-	UpdateReport(id uint, req *models.UpdateReportRequest, userID uint, userRole models.Role, imagePath string) (*models.TVMReport, error)
+	UpdateReport(id uint, req *models.UpdateReportRequest,	status models.ReportStatus, userID uint, userRole models.Role, imagePath string) (*models.TVMReport, error)
 	DeleteReport(id uint, userRole models.Role) error
 	GetMyReports(userID uint) ([]models.TVMReport, error)
 	GetDashboard(userID uint) (map[string]interface{}, error)
@@ -35,6 +35,7 @@ type TVMReportUsecase interface {
 	OpenReport(reportID uint) error
 	GetMyReportsAsTechnician(userID uint) ([]models.TVMReport, error)
 	ResolveReport(reportID uint, teknisiID uint, status models.ReportStatus) error
+	// UpdateReportAdminStatus(adminID uint, reportID uint, status models.ReportStatus) error
 }
 
 type tvmReportUsecase struct {
@@ -107,6 +108,7 @@ func (u *tvmReportUsecase) GetAllReports(filter *models.ReportFilterRequest) ([]
 func (u *tvmReportUsecase) UpdateReport(
 	id uint,
 	req *models.UpdateReportRequest,
+	status models.ReportStatus,
 	userID uint,
 	userRole models.Role,
 	imagePath string, // hasil upload baru (opsional)
@@ -127,18 +129,20 @@ func (u *tvmReportUsecase) UpdateReport(
 		report.TVMCode = req.TVMCode
 	}
 
-	if req.Status != "" {
-		report.Status = req.Status
+	if req.Status == models.StatusPending &&
+		(report.Status == models.StatusResolved ||
+		report.Status == models.StatusInProgress || report.Status == models.StatusPending || report.Status == models.StatusRejected) {
 
-		if req.Status == models.StatusResolved {
-			now := time.Now()
-			report.ResolvedAt = &now
+		// 🔓 RESET KEPEMILIKAN
+		report.AssignedTo = nil
+		report.AssignedAt = nil
 
-			if userRole == models.RoleAdmin {
-				report.ResolvedBy = &userID
-			}
-		}
+		// 🔓 RESET STATE PENYELESAIAN
+		report.ResolvedAt = nil
+		report.ResolvedBy = nil
 	}
+
+	report.Status = req.Status
 
 	if req.IssueType != "" {
 		report.IssueType = req.IssueType
@@ -161,6 +165,13 @@ func (u *tvmReportUsecase) UpdateReport(
 	if err := u.repo.Update(report); err != nil {
 		return nil, err
 	}
+
+	u.historyRepo.Create(&models.TVMReportHistory{
+		TVMReportID: report.ID,
+		FromStatus:  models.StatusResolved,
+		ToStatus:    models.StatusPending,
+		Role:        userRole,
+	})
 
 	return u.repo.FindByID(report.ID)
 }
@@ -404,6 +415,9 @@ func (u *tvmReportUsecase) GetMyReportsAsTechnician(teknisiID uint) ([]models.TV
 	return u.repo.GetReportsByTechnician(teknisiID)
 }
 
+// func (u *tvmReportUsecase) UpdateReportAdminStatus(adminID uint, reportID uint, status models.ReportStatus) error {
+// 	return u.repo.UpdateReportAdminStatus(adminID, reportID, status)
+// }
 // func (u *tvmReportUsecase) ResolveReport(
 // 	reportID uint,
 // 	teknisiID uint,

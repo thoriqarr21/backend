@@ -83,6 +83,10 @@ type ReportFilterRequest struct {
 	Limit      int    `form:"limit"`
 }
 
+type UpdateReportStatusAdminRequest struct {
+	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
+}
+
 type UpdateReportStatusRequest struct {
 	Status      ReportStatus `json:"status" binding:"omitempty,oneof=pending in_progress resolved rejected"`
 	AssignedTo  *uint        `json:"assigned_to,omitempty"`

@@ -99,8 +99,18 @@ func (r *tvmReportRepository) GetAll(filter *models.ReportFilterRequest) ([]mode
 }
 
 func (r *tvmReportRepository) Update(report *models.TVMReport) error {
-	return r.db.Save(report).Error
+	return r.db.Model(&models.TVMReport{}).
+		Where("id = ?", report.ID).
+		Updates(map[string]interface{}{
+			"status":       report.Status,
+			"assigned_to":  report.AssignedTo, // nil → NULL
+			"assigned_at":  report.AssignedAt, // nil → NULL
+			"resolved_at":  report.ResolvedAt,
+			"resolved_by":  report.ResolvedBy,
+			"image_url":    report.ImageURL,
+		}).Error
 }
+
 
 func (r *tvmReportRepository) Delete(id uint) error {
 	return r.db.Delete(&models.TVMReport{}, id).Error

@@ -116,11 +116,12 @@ func (ctrl *TVMReportController) UpdateReport(c *gin.Context) {
 	user, _ := c.Get("user")
 	userRole := user.(models.User).Role
 
-	report, err := ctrl.usecase.UpdateReport(uint(id), &req, userID.(uint), userRole, imagePath)
+	report, err := ctrl.usecase.UpdateReport(uint(id), &req, models.StatusPending, userID.(uint), userRole, imagePath)
 	if err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
+	
 
 	c.JSON(http.StatusOK, models.TvmReportResponse{
 		Status:  http.StatusOK,
@@ -128,6 +129,36 @@ func (ctrl *TVMReportController) UpdateReport(c *gin.Context) {
 		Data:    report,
 	})
 }
+
+// func (ctrl *TVMReportController) UpdateReportAdminStatus(c *gin.Context) {
+// 	id, err := strconv.Atoi(c.Param("id"))
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid report ID"})
+// 		return
+// 	}
+
+// 	var req models.UpdateReportStatusAdminRequest
+// 	if err := c.ShouldBindJSON(&req); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	userID, _ := c.Get("user_id")
+// 	user, _ := c.Get("user")
+// 	userRole := user.(models.User).Role
+
+// 	report, err := ctrl.usecase.UpdateReportAdminStatus(uint(id), &req, userID.(uint), userRole)
+// 	if err != nil {
+// 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, models.TvmReportResponse{
+// 		Status:  http.StatusOK,
+// 		Message: "Report status updated successfully",
+// 		Data:    report,
+// 	})
+// }
 
 func (ctrl *TVMReportController) GetReportByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
