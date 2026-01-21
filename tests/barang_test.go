@@ -111,3 +111,13 @@ func TestAdminUpdateBarang(t *testing.T){
 	assert.Equal(t, "https://example.com/image.jpg", barang.ImageURL)
 }
 
+func TestAdminDeleteBarang(t *testing.T) {
+	r := GetRouter()
+
+	token := LoginAsAdmin(t, r)
+
+	SeedBarang(t, r)
+
+	w := PerformRequest(r, "DELETE", "/api/v1/admin/barang/1", nil, token)
+	assert.Equal(t, 200, w.Code)
+}

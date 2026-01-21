@@ -106,3 +106,39 @@ func TestAdminDeleteUser(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, gorm.ErrRecordNotFound, err)
 }
+
+func TestAdminResetPassword(t *testing.T) {
+	r := GetRouter()
+
+	userID := RegisterAndGetUserID(
+		t,
+		r,
+		"resettest",
+		"resettest@test.com",
+	)
+
+	token := LoginAsAdmin(t, r)
+
+	payload := map[string]string{
+		"new_password": "newpassword123",
+	}
+
+	w := PerformRequest(
+		r,
+		"POST",
+		fmt.Sprintf("/api/v1/admin/users/%d/reset-password", userID),
+		payload,
+		token,
+	)
+
+	assert.Equal(t, 200, w.Code)
+
+	// Verifikasi password berubah
+	loginPayload := map[string]string{
+		"username": "resettest",
+		"password": "newpassword123",
+	}
+
+	w = PerformRequest(r, "POST", "/api/v1/auth/login", loginPayload, "")
+	assert.Equal(t, 200, w.Code)
+}
