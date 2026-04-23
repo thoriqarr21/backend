@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"backend/models"
+	"mobile-api/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

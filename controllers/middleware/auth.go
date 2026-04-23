@@ -3,7 +3,6 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -17,7 +16,7 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -37,14 +36,6 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		secret := os.Getenv("JWT_SECRET")
-		if secret == "" {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "JWT secret not configured",
-			})
-			return
-		}
-
 		token, err := jwt.ParseWithClaims(
 			tokenString,
 			&CustomClaims{},
@@ -52,7 +43,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, errors.New("unexpected signing method")
 				}
-				return []byte(secret), nil
+				return []byte(jwtSecret), nil
 			},
 		)
 
@@ -78,7 +69,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 🔥 SET CONTEXT (INI PENTING)
 		c.Set("user_id", claims.UserID)
 		c.Set("role", claims.Role)
 

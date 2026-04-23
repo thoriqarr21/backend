@@ -76,19 +76,26 @@ type Config struct {
 	DBName     string
 	ServerPort string
 	JWTSecret  string
+	VoltrasURL        string
+    VoltrasOfficeCode string
+    VoltrasToken      string
 }
 
 func LoadConfig() *Config {
 	godotenv.Load()
 
 	return &Config{
-		DBHost:     getEnv("DB_HOST", "localhost"),
+		DBHost:     getEnv("DB_HOST", "127.0.0.1"),
 		DBPort:     getEnv("DB_PORT", "5432"), // Port PostgreSQL
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "12345"),
-		DBName:     getEnv("DB_NAME", "ezytix_db"),
-		ServerPort: getEnv("SERVER_PORT", "8080"),
+		DBName:     getEnv("DB_NAME", "ezytix_local"),
+		ServerPort: getEnv("SERVER_PORT", "3032"),
 		JWTSecret:  getEnv("JWT_SECRET", "your-secret-key-change-this"),
+		VoltrasURL:        getEnv("VOLTRAS_URL", ""),
+		VoltrasOfficeCode: getEnv("VOLTRAS_OFFICE_CODE", ""),
+		VoltrasToken:      getEnv("VOLTRAS_TOKEN", ""),
+
 	}
 }
 

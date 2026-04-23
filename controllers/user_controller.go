@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"backend/models"
-	"backend/models/usecase"
+	"mobile-api/models"
+	"mobile-api/models/usecase"
 	"net/http"
 	"strconv"
 

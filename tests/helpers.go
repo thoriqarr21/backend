@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"backend/config"
-	"backend/models"
+	"mobile-api/config"
+	"mobile-api/models"
 	"net/http"
 	"testing"
 

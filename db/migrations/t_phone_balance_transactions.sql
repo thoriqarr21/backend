@@ -1,0 +1,11 @@
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (1, '6283823113798', '100000.00', 'TOPUP', 1, '2026-02-20 11:58:34.664227');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (2, '6283823113798', '10000.00', 'TOPUP', 1, '2026-02-20 12:36:00.375149');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (3, '6283823113798', '100000.00', 'TOPUP', 1, '2026-02-20 13:37:31.859924');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (4, '6283823113798', '845300.00', 'TOPUP', 1, '2026-02-20 14:40:10.853717');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (5, '6283823113798', '1055300.00', 'DEDUCT', NULL, '2026-02-20 15:10:57.799877');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (6, '6283823113798', '2118430.00', 'TOPUP', 1, '2026-02-25 08:34:19.339982');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (7, '6283823113798', '2118430.00', 'DEDUCT', NULL, '2026-02-25 08:34:37.587696');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (8, '6283823113798', '2000000.00', 'TOPUP', 1, '2026-03-02 18:00:55.012948');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (9, '6283823113798', '1637650.00', 'DEDUCT', NULL, '2026-03-02 18:01:02.878888');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (10, '6283823113798', '3000000.00', 'TOPUP', 1, '2026-03-02 18:08:02.831844');
+INSERT INTO "t_phone_balance_transactions" ("id", "phone", "amount", "type", "processed_by", "created_at") VALUES (11, '6283823113798', '2858710.00', 'DEDUCT', NULL, '2026-03-02 18:08:12.714694');

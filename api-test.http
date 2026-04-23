@@ -1,0 +1,2847 @@
+### ============================================================
+### API TEST - MOBILE API (Voltras Flight Integration)
+### Compatible: VS Code REST Client / JetBrains HTTP Client
+### ============================================================
+
+@baseUrl = http://localhost:8080
+@token = your_jwt_token_here
+@adminToken = your_admin_jwt_token_here
+@contentType = application/json
+
+
+### ============================================================
+### 1. AUTH
+### ============================================================
+
+### Register
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: {{contentType}}
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone": "08123456789",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+###
+
+### Login
+# @name login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "phone": "08123456789",
+  "password": "password123"
+}
+
+###
+
+### Refresh Token
+POST {{baseUrl}}/api/v1/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "your_refresh_token_here"
+}
+
+###
+
+### Logout
+POST {{baseUrl}}/api/v1/auth/logout
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### 2. VOLTRAS - OFFICE INFO
+### ============================================================
+
+### Get Office Information
+GET {{baseUrl}}/api/v1/voltras/office-info
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### 3. VOLTRAS - FLIGHT SEARCH
+### ============================================================
+
+### Search Flight One Way - CGK ke DPS (Garuda + Lion)
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS",
+  "departdate": "2025-08-01",
+  "adult": "1",
+  "child": "0",
+  "infant": "0"
+}
+
+###
+
+### Search Flight One Way - CGK ke SUB
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "SUB",
+  "departdate": "2025-08-15",
+  "adult": "2",
+  "child": "1",
+  "infant": "0"
+}
+
+###
+
+### Search Flight - Missing Required Field (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS"
+}
+
+###
+
+### Search Flight - Tanggal Lampau (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS",
+  "departdate": "2020-01-01",
+  "adult": "1"
+}
+
+###
+
+
+### ============================================================
+### 4. VOLTRAS - RETRIEVE FARE (AIRFARE)
+### ============================================================
+### Gunakan data dari hasil search (flight_no, class_code, dll)
+### Format: sumlocal = direct/connecting sumlocal, throughfare = connecting throughfare
+
+### Retrieve Fare - OW Direct, Sumlocal (1 segment)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA401",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2025-08-01",
+          "depart_time": "06:00",
+          "arrive_time": "09:00"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Retrieve Fare - RT Sumlocal (departure + return, masing-masing direct)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA401",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2025-08-01",
+          "depart_time": "06:00",
+          "arrive_time": "09:00"
+        }
+      ]
+    },
+    {
+      "trip_type": "return",
+      "airline_code": "GA",
+      "trip_date": "2025-08-08",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA402",
+          "class_code": "Y",
+          "from_city": "DPS",
+          "to_city": "CGK",
+          "depart_date": "2025-08-08",
+          "depart_time": "10:00",
+          "arrive_time": "12:00"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Retrieve Fare - OW Connecting Sumlocal (2 segment)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA251",
+          "class_code": "Y",
+          "from_city": "DPS",
+          "to_city": "JOG",
+          "depart_date": "2025-08-01",
+          "depart_time": "07:00",
+          "arrive_time": "07:40"
+        },
+        {
+          "flight_no": "GA205",
+          "class_code": "J",
+          "from_city": "JOG",
+          "to_city": "CGK",
+          "depart_date": "2025-08-01",
+          "depart_time": "10:05",
+          "arrive_time": "11:25"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Retrieve Fare - OW Connecting Throughfare + Asuransi
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "QG",
+      "trip_date": "2025-08-01",
+      "throughfare": true,
+      "class_code": "N",
+      "segments": [
+        {
+          "flight_no": "QG815",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2025-08-01",
+          "depart_time": "04:10",
+          "arrive_time": "05:40"
+        },
+        {
+          "flight_no": "QG642",
+          "from_city": "SUB",
+          "to_city": "DPS",
+          "depart_date": "2025-08-01",
+          "depart_time": "08:00",
+          "arrive_time": "09:50"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": true
+}
+
+###
+
+### Retrieve Fare - 2 Adult + 1 Child
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2025-08-15",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT561",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2025-08-15",
+          "depart_time": "07:00",
+          "arrive_time": "08:30"
+        }
+      ]
+    }
+  ],
+  "adult_count": 2,
+  "child_count": 1,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Retrieve Fare - Missing trips (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1
+}
+
+###
+
+### Retrieve Fare - Missing segments (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "segments": []
+    }
+  ],
+  "adult_count": 1
+}
+
+###
+
+
+### ============================================================
+### 5. VOLTRAS - BOOK FLIGHT
+### ============================================================
+### Format tanggal: YYYY-MM-DD
+### throughfare: false = sumlocal (classcode di tiap segment)
+###              true  = throughfare (classcode di level trip)
+
+### Book OW - 1 Adult, Direct, Sumlocal
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA400",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2025-08-01",
+          "depart_time": "05:35",
+          "arrive_time": "08:40"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MS",
+      "first_name": "Khatarina",
+      "last_name": "Alexandria",
+      "type": "ADULT",
+      "passport": {
+        "no": "",
+        "nationality": "",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Khatarina",
+    "last_name": "Alexandria",
+    "phone1": "089922228888"
+  },
+  "agentcontact": {
+    "first_name": "Voltras",
+    "last_name": "Travel",
+    "email_address": "admin@voltras.co.id",
+    "phone": "29008587"
+  }
+}
+
+###
+
+### Book RT - 1 Adult, Departure Direct + Return Connecting Sumlocal (maskapai sama)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA400",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2025-08-01",
+          "depart_time": "05:35",
+          "arrive_time": "08:40"
+        }
+      ]
+    },
+    {
+      "trip_type": "return",
+      "airline_code": "GA",
+      "trip_date": "2025-08-08",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA251",
+          "class_code": "Y",
+          "from_city": "DPS",
+          "to_city": "JOG",
+          "depart_date": "2025-08-08",
+          "depart_time": "07:00",
+          "arrive_time": "07:40"
+        },
+        {
+          "flight_no": "GA205",
+          "class_code": "J",
+          "from_city": "JOG",
+          "to_city": "CGK",
+          "depart_date": "2025-08-08",
+          "depart_time": "10:05",
+          "arrive_time": "11:25"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MS",
+      "first_name": "Khatarina",
+      "last_name": "Mayanti",
+      "type": "ADULT"
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Khatarina",
+    "last_name": "Mayanti",
+    "phone1": "086726123812"
+  },
+  "agentcontact": {
+    "first_name": "Voltras",
+    "last_name": "Travel",
+    "email_address": "admin@voltras.co.id"
+  }
+}
+
+###
+
+### Book RT - 1 Adult, Departure + Return Throughfare, Beda Maskapai + Service Fee + Asuransi
+### → Response akan ada <departure> DAN <return> dengan PNR berbeda
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": true,
+  "service_fee": 10000,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2025-08-01",
+      "throughfare": true,
+      "class_code": "K",
+      "segments": [
+        {
+          "flight_no": "ID6596",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2025-08-01",
+          "depart_time": "04:30",
+          "arrive_time": "06:00"
+        },
+        {
+          "flight_no": "IW1843",
+          "from_city": "SUB",
+          "to_city": "JOG",
+          "depart_date": "2025-08-01",
+          "depart_time": "07:30",
+          "arrive_time": "08:40"
+        }
+      ]
+    },
+    {
+      "trip_type": "return",
+      "airline_code": "GA",
+      "trip_date": "2025-08-05",
+      "throughfare": true,
+      "class_code": "N",
+      "segments": [
+        {
+          "flight_no": "GA209",
+          "from_city": "JOG",
+          "to_city": "CGK",
+          "depart_date": "2025-08-05",
+          "depart_time": "14:15",
+          "arrive_time": "15:30"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "JAKA",
+      "last_name": "PERMADI",
+      "type": "ADULT",
+      "dob": "1994-08-10",
+      "passport": {
+        "no": "R1234",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": "2030-08-20"
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "JAKA",
+    "last_name": "PERMADI",
+    "phone1": "081393673701",
+    "phone2": "081393673702"
+  },
+  "agentcontact": {
+    "first_name": "Theresia",
+    "last_name": "Handayani",
+    "email_address": "theresia@voltras.co.id",
+    "phone": "081808313940"
+  }
+}
+
+###
+
+### Book OW - 2 Adult + 1 Child + 1 Infant
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 2,
+  "child_count": 1,
+  "infant_count": 1,
+  "with_insurance": false,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2025-08-15",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT561",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2025-08-15",
+          "depart_time": "07:00",
+          "arrive_time": "08:30"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1990-05-15"
+    },
+    {
+      "title": "MRS",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1992-03-20"
+    },
+    {
+      "title": "MSTR",
+      "first_name": "Jimmy",
+      "last_name": "Doe",
+      "type": "CHILD",
+      "dob": "2015-07-10",
+      "adult_assoc": 1
+    },
+    {
+      "title": "MISS",
+      "first_name": "Baby",
+      "last_name": "Doe",
+      "type": "INFANT",
+      "dob": "2024-01-10",
+      "adult_assoc": 2
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789",
+    "email_address": "john@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW - International, Dengan Passport Lengkap
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-09-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA888",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "SIN",
+          "depart_date": "2025-09-01",
+          "depart_time": "08:00",
+          "arrive_time": "11:00"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1990-05-15",
+      "passport": {
+        "no": "A1234567",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": "2030-01-01"
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789",
+    "email_address": "john@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book - Missing first_name (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "GA",
+      "trip_date": "2025-08-01",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "GA400",
+          "class_code": "Y",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2025-08-01",
+          "depart_time": "05:35",
+          "arrive_time": "08:40"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "last_name": "Doe",
+      "type": "ADULT"
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+
+### ============================================================
+### 6. VOLTRAS - PNR, TICKETING, AUTO TICKET, CANCEL
+### ============================================================
+
+### Retrieve PNR - lihat detail booking + status terbaru
+POST {{baseUrl}}/api/v1/voltras/flight/pnr/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "pnr": "14773"
+}
+
+###
+
+### Retrieve PNR - Missing Field (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/pnr/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{}
+
+###
+
+### Ticketing Flight - bayar tiket langsung (debit saldo office)
+POST {{baseUrl}}/api/v1/voltras/flight/ticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1
+}
+
+###
+
+### Ticketing - Booking Not Found (should return 404)
+POST {{baseUrl}}/api/v1/voltras/flight/ticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 99999
+}
+
+###
+
+### Auto Ticket - buat Virtual Account untuk pembayaran customer
+### Response: account_no (nomor VA) + time_limit (batas bayar)
+POST {{baseUrl}}/api/v1/voltras/flight/autoticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "email": "customer@example.com",
+  "send_ticket": true
+}
+
+###
+
+### Auto Ticket - send_ticket false (VA saja, tiket tidak dikirim setelah bayar)
+POST {{baseUrl}}/api/v1/voltras/flight/autoticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "email": "customer@example.com",
+  "send_ticket": false
+}
+
+###
+
+### Cancel Ticket
+POST {{baseUrl}}/api/v1/voltras/flight/ticket/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "reason": "Perubahan jadwal penumpang"
+}
+
+###
+
+### Cancel Ticket - Tanpa Reason
+POST {{baseUrl}}/api/v1/voltras/flight/ticket/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1
+}
+
+###
+
+### Cancel Ticket - Sudah Cancelled (should return 422)
+POST {{baseUrl}}/api/v1/voltras/flight/ticket/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "reason": "Test double cancel"
+}
+
+###
+
+### Print Ticket - download file HTML atau PDF
+### Content-Type response: text/html atau application/pdf (tergantung maskapai)
+GET {{baseUrl}}/api/v1/voltras/flight/print?pnr=14773
+Authorization: Bearer {{token}}
+
+###
+
+### Print Insurance - download PDF asuransi
+### Hanya untuk booking dengan with_insurance = true dan sudah TICKETED
+GET {{baseUrl}}/api/v1/voltras/flight/print-insurance?pnr=14773
+Authorization: Bearer {{token}}
+
+###
+
+### Advance Retrieve - daftar semua PNR maskapai GA bulan ini
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "GA",
+  "from_date": "2025-08-01",
+  "to_date": "2025-08-31",
+  "status": "ALL"
+}
+
+###
+
+### Advance Retrieve - filter BOOKED saja
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "GA",
+  "from_date": "2025-08-01",
+  "to_date": "2025-08-31",
+  "status": "BOOKED"
+}
+
+###
+
+### Advance Retrieve - filter TICKETED
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "JT",
+  "from_date": "2025-07-01",
+  "to_date": "2025-08-31",
+  "status": "TICKETED"
+}
+
+###
+
+### Advance Retrieve - filter CANCELED
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "GA",
+  "from_date": "2025-01-01",
+  "to_date": "2025-12-31",
+  "status": "CANCELED"
+}
+
+###
+
+### Advance Retrieve - Status tidak valid (should return 400)
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "GA",
+  "from_date": "2025-08-01",
+  "to_date": "2025-08-31",
+  "status": "INVALID"
+}
+
+###
+
+
+### ============================================================
+### 7. SERVICES & MASTER DATA
+### ============================================================
+
+### Get Countries
+GET {{baseUrl}}/api/v1/services/countries
+Authorization: Bearer {{token}}
+
+###
+
+### Get Airports
+GET {{baseUrl}}/api/v1/services/airports
+Authorization: Bearer {{token}}
+
+###
+
+### Get Airlines
+GET {{baseUrl}}/api/v1/services/airlines
+Authorization: Bearer {{token}}
+
+###
+
+### Get VA Banks
+GET {{baseUrl}}/api/v1/services/va-banks
+Authorization: Bearer {{token}}
+
+###
+
+### Create Transaction (Payment)
+POST {{baseUrl}}/api/v1/services/payment/transactions
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "payment_method_id": 2,
+  "bank_code": "BCA",
+  "amount": 1500000,
+  "admin_fee": 5000,
+  "markup": 0
+}
+
+###
+
+### Create Transaction - Missing Required Fields (should return 400)
+POST {{baseUrl}}/api/v1/services/payment/transactions
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "payment_method_id": 2
+}
+
+###
+
+### Check Transaction Status
+POST {{baseUrl}}/api/v1/services/payment/check
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "external_id": "INV-20250801-0001"
+}
+
+###
+
+### Get Balance Check by Phone
+GET {{baseUrl}}/api/v1/services/balance/08123456789
+Authorization: Bearer {{token}}
+
+###
+
+### Send Documents (Itinerary/Ticket via Email)
+POST {{baseUrl}}/api/v1/services/documents/send
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "email": "john.doe@example.com"
+}
+
+###
+
+### Print Documents
+POST {{baseUrl}}/api/v1/services/documents/print
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "doc_type": "ITINERARY"
+}
+
+###
+
+### Print Documents - Ticket
+POST {{baseUrl}}/api/v1/services/documents/print
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "doc_type": "TICKET"
+}
+
+###
+
+### Print Documents - Invoice
+POST {{baseUrl}}/api/v1/services/documents/print
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "doc_type": "INVOICE"
+}
+
+###
+
+
+### ============================================================
+### 8. BOOKINGS HISTORY
+### ============================================================
+
+### Get My Bookings
+GET {{baseUrl}}/api/v1/bookings
+Authorization: Bearer {{token}}
+
+###
+
+### Get Booking Detail
+GET {{baseUrl}}/api/v1/bookings/1
+Authorization: Bearer {{token}}
+
+###
+
+### Get Booking Detail - Not Found (should return 404)
+GET {{baseUrl}}/api/v1/bookings/99999
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### 9. ADMIN ROUTES (ADMIN ONLY)
+### ============================================================
+
+### Get All Users List
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get All Transactions
+GET {{baseUrl}}/api/v1/admin/transactions
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get All Bookings
+GET {{baseUrl}}/api/v1/admin/bookings
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Top Up Phone Balance
+POST {{baseUrl}}/api/v1/admin/balance/topup
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "phone": "08123456789",
+  "amount": 500000
+}
+
+###
+
+### Deduct Phone Balance
+POST {{baseUrl}}/api/v1/admin/balance/deduct
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "phone": "08123456789",
+  "amount": 100000
+}
+
+###
+
+### Access Admin Route with User Token (should return 403)
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{token}}
+
+###
+
+
+
+
+---------------------------------------- TERBARU ------------------------------------------------
+
+### ============================================================
+### API TEST - MOBILE API (Voltras Flight Integration)
+### Data berdasarkan hasil search CGK → DPS 23-Apr-2026
+### Compatible: VS Code REST Client / JetBrains HTTP Client
+### ============================================================
+
+@baseUrl = http://localhost:8080
+@token = your_jwt_token_here
+@adminToken = your_admin_jwt_token_here
+@contentType = application/json
+
+
+### ============================================================
+### 1. AUTH
+### ============================================================
+
+### Register
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: {{contentType}}
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone": "08123456789",
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+###
+
+### Login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: {{contentType}}
+
+{
+  "phone": "08123456789",
+  "password": "password123"
+}
+
+###
+
+### Refresh Token
+POST {{baseUrl}}/api/v1/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "your_refresh_token_here"
+}
+
+###
+
+### Logout
+POST {{baseUrl}}/api/v1/auth/logout
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### 2. OFFICE INFO
+### ============================================================
+
+### Get Office Information
+GET {{baseUrl}}/api/v1/voltras/office-info
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### 3. FLIGHT SEARCH
+### ============================================================
+
+### Search CGK → DPS (data yang sudah ada)
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS",
+  "departdate": "2026-04-23",
+  "adult": "1",
+  "child": "0",
+  "infant": "0"
+}
+
+###
+
+### Search CGK → DPS - 2 Adult + 1 Child
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS",
+  "departdate": "2026-04-23",
+  "adult": "2",
+  "child": "1",
+  "infant": "0"
+}
+
+###
+
+### Search - Missing Required Field (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS"
+}
+
+###
+
+### Search - Tanggal Lampau (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "fromcity": "CGK",
+  "tocity": "DPS",
+  "departdate": "2020-01-01",
+  "adult": "1"
+}
+
+###
+
+
+### ============================================================
+### 4. RETRIEVE FARE
+### Data segmen diambil langsung dari hasil search di atas
+### ============================================================
+
+### Fare - OW Direct: JT12 CGK→DPS (1 segment, class B ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT12",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:00",
+          "arrive_time": "21:55"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Direct: JT10 CGK→DPS (class B ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT10",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "17:40",
+          "arrive_time": "20:35"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Direct: JT24 CGK→DPS (class B ECONOMY, avail 1)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT24",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "13:40",
+          "arrive_time": "16:35"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Direct: JT3026 CGK→DPS (class B ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT3026",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "15:05",
+          "arrive_time": "18:00"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Direct: IU758 CGK→DPS (class B ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "IU758",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "14:05",
+          "arrive_time": "17:00"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Direct: IU742 CGK→DPS (class B ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "IU742",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "13:00",
+          "arrive_time": "15:55"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Direct: ID6508 CGK→DPS (class S ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6508",
+          "class_code": "S",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "15:30",
+          "arrive_time": "18:25"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Connecting Sumlocal: ID6582+JT910 via SUB (class B ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6582",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2026-04-23",
+          "depart_time": "12:00",
+          "arrive_time": "13:30"
+        },
+        {
+          "flight_no": "JT910",
+          "class_code": "B",
+          "from_city": "SUB",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "17:05",
+          "arrive_time": "19:05"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Connecting Sumlocal: ID6863+JT910 via SUB (cheapest, class G)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6863",
+          "class_code": "G",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2026-04-23",
+          "depart_time": "13:30",
+          "arrive_time": "15:00"
+        },
+        {
+          "flight_no": "JT910",
+          "class_code": "G",
+          "from_city": "SUB",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "17:05",
+          "arrive_time": "19:05"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Connecting via YIA: ID6360+JT566 (class W ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6360",
+          "class_code": "W",
+          "from_city": "CGK",
+          "to_city": "YIA",
+          "depart_date": "2026-04-23",
+          "depart_time": "16:20",
+          "arrive_time": "17:30"
+        },
+        {
+          "flight_no": "JT566",
+          "class_code": "W",
+          "from_city": "YIA",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:40",
+          "arrive_time": "22:05"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Connecting via YIA: ID6344+JT3560 (class W ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6344",
+          "class_code": "W",
+          "from_city": "CGK",
+          "to_city": "YIA",
+          "depart_date": "2026-04-23",
+          "depart_time": "13:05",
+          "arrive_time": "14:15"
+        },
+        {
+          "flight_no": "JT3560",
+          "class_code": "W",
+          "from_city": "YIA",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "15:25",
+          "arrive_time": "17:50"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW Day Exchange (+1): ID6588+ID6412 via SUB (class S ECONOMY)
+### Catatan: depart_date segment 2 = 2026-04-24 (next day)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6588",
+          "class_code": "S",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2026-04-23",
+          "depart_time": "20:00",
+          "arrive_time": "21:30"
+        },
+        {
+          "flight_no": "ID6412",
+          "class_code": "S",
+          "from_city": "SUB",
+          "to_city": "DPS",
+          "depart_date": "2026-04-24",
+          "depart_time": "06:20",
+          "arrive_time": "08:20"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false
+}
+
+###
+
+### Fare - OW dengan Asuransi: JT12 CGK→DPS
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT12",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:00",
+          "arrive_time": "21:55"
+        }
+      ]
+    }
+  ],
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": true
+}
+
+###
+
+### Fare - Missing trips (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1
+}
+
+###
+
+### Fare - segments kosong (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "segments": []
+    }
+  ],
+  "adult_count": 1
+}
+
+###
+
+
+### ============================================================
+### 5. BOOK FLIGHT
+### Gunakan data yang sudah di-fare terlebih dahulu
+### ============================================================
+
+### Book OW Direct - JT12 CGK→DPS, 1 Adult
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT12",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:00",
+          "arrive_time": "21:55"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1990-05-15",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789",
+    "email_address": "john.doe@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW Direct - JT10 CGK→DPS, 1 Adult
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT10",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "17:40",
+          "arrive_time": "20:35"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MRS",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1992-03-20",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "phone1": "08987654321",
+    "email_address": "jane.doe@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW Connecting Sumlocal - ID6863+JT910 via SUB (cheapest G class)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6863",
+          "class_code": "G",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2026-04-23",
+          "depart_time": "13:30",
+          "arrive_time": "15:00"
+        },
+        {
+          "flight_no": "JT910",
+          "class_code": "G",
+          "from_city": "SUB",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "17:05",
+          "arrive_time": "19:05"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "Budi",
+      "last_name": "Santoso",
+      "type": "ADULT",
+      "dob": "1988-11-20",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Budi",
+    "last_name": "Santoso",
+    "phone1": "081234567890",
+    "email_address": "budi@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW Connecting via YIA - ID6344+JT3560 (class W ECONOMY)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6344",
+          "class_code": "W",
+          "from_city": "CGK",
+          "to_city": "YIA",
+          "depart_date": "2026-04-23",
+          "depart_time": "13:05",
+          "arrive_time": "14:15"
+        },
+        {
+          "flight_no": "JT3560",
+          "class_code": "W",
+          "from_city": "YIA",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "15:25",
+          "arrive_time": "17:50"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MS",
+      "first_name": "Sari",
+      "last_name": "Dewi",
+      "type": "ADULT",
+      "dob": "1995-07-14",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Sari",
+    "last_name": "Dewi",
+    "phone1": "082112345678",
+    "email_address": "sari@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW Day Exchange - ID6588+ID6412 via SUB (overnight, class S)
+### Segment 2 berangkat hari berikutnya (2026-04-24)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "ID6588",
+          "class_code": "S",
+          "from_city": "CGK",
+          "to_city": "SUB",
+          "depart_date": "2026-04-23",
+          "depart_time": "20:00",
+          "arrive_time": "21:30"
+        },
+        {
+          "flight_no": "ID6412",
+          "class_code": "S",
+          "from_city": "SUB",
+          "to_city": "DPS",
+          "depart_date": "2026-04-24",
+          "depart_time": "06:20",
+          "arrive_time": "08:20"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "Agus",
+      "last_name": "Prasetyo",
+      "type": "ADULT",
+      "dob": "1985-03-10",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Agus",
+    "last_name": "Prasetyo",
+    "phone1": "087765432109",
+    "email_address": "agus@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW - 2 Adult + 1 Child + 1 Infant (JT12 CGK→DPS)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 2,
+  "child_count": 1,
+  "infant_count": 1,
+  "with_insurance": false,
+  "service_fee": 0,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT12",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:00",
+          "arrive_time": "21:55"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1990-05-15",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    },
+    {
+      "title": "MRS",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "dob": "1992-03-20",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    },
+    {
+      "title": "MSTR",
+      "first_name": "Jimmy",
+      "last_name": "Doe",
+      "type": "CHILD",
+      "dob": "2015-07-10",
+      "adult_assoc": 1,
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    },
+    {
+      "title": "MISS",
+      "first_name": "Baby",
+      "last_name": "Doe",
+      "type": "INFANT",
+      "dob": "2025-01-10",
+      "adult_assoc": 2,
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789",
+    "email_address": "john.doe@example.com"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book OW + Asuransi + Service Fee - JT3026 CGK→DPS
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "child_count": 0,
+  "infant_count": 0,
+  "with_insurance": true,
+  "service_fee": 15000,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT3026",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "15:05",
+          "arrive_time": "18:00"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "Rizky",
+      "last_name": "Pratama",
+      "type": "ADULT",
+      "dob": "1993-09-25",
+      "passport": {
+        "no": "",
+        "nationality": "ID",
+        "issuing_country": "ID",
+        "expiry": ""
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "Rizky",
+    "last_name": "Pratama",
+    "phone1": "08567891234",
+    "phone2": "08567891235",
+    "email_address": "rizky@example.com"
+  },
+  "agentcontact": {
+    "first_name": "Voltras",
+    "last_name": "Travel",
+    "email_address": "admin@voltras.co.id",
+    "phone": "29008587"
+  }
+}
+
+###
+
+### Book - Missing phone1 (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT12",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:00",
+          "arrive_time": "21:55"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "passport": {
+        "nationality": "ID",
+        "issuing_country": "ID"
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book - Missing nationality (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": [
+        {
+          "flight_no": "JT12",
+          "class_code": "B",
+          "from_city": "CGK",
+          "to_city": "DPS",
+          "depart_date": "2026-04-23",
+          "depart_time": "19:00",
+          "arrive_time": "21:55"
+        }
+      ]
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "passport": {
+        "no": "",
+        "nationality": "",
+        "issuing_country": "ID"
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789"
+  },
+  "agentcontact": {
+    "first_name": "API",
+    "last_name": "SYSTEM",
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+### Book - segments kosong (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "adult_count": 1,
+  "trips": [
+    {
+      "trip_type": "departure",
+      "airline_code": "JT",
+      "trip_date": "2026-04-23",
+      "throughfare": false,
+      "segments": []
+    }
+  ],
+  "listpax": [
+    {
+      "title": "MR",
+      "first_name": "John",
+      "last_name": "Doe",
+      "type": "ADULT",
+      "passport": {
+        "nationality": "ID",
+        "issuing_country": "ID"
+      }
+    }
+  ],
+  "paxcontact": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone1": "08123456789"
+  },
+  "agentcontact": {
+    "email_address": "api@system.com"
+  }
+}
+
+###
+
+
+### ============================================================
+### 6. PNR, TICKETING, AUTO TICKET, CANCEL
+### Ganti booking_id dan pnr sesuai hasil booking di atas
+### ============================================================
+
+### Retrieve PNR
+POST {{baseUrl}}/api/v1/voltras/flight/pnr/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "pnr": "14773"
+}
+
+###
+
+### Retrieve PNR - Missing Field (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/pnr/retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{}
+
+###
+
+### Ticketing - bayar langsung debit saldo office
+POST {{baseUrl}}/api/v1/voltras/flight/ticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1
+}
+
+###
+
+### Ticketing - Booking Not Found (expect 404)
+POST {{baseUrl}}/api/v1/voltras/flight/ticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 99999
+}
+
+###
+
+### Auto Ticket - buat Virtual Account, kirim tiket setelah bayar
+POST {{baseUrl}}/api/v1/voltras/flight/autoticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "email": "john.doe@example.com",
+  "send_ticket": true
+}
+
+###
+
+### Auto Ticket - VA saja, tiket tidak langsung dikirim
+POST {{baseUrl}}/api/v1/voltras/flight/autoticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "email": "john.doe@example.com",
+  "send_ticket": false
+}
+
+###
+
+### Auto Ticket - Booking status bukan "booked" (expect 422)
+POST {{baseUrl}}/api/v1/voltras/flight/autoticket
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 2,
+  "email": "john.doe@example.com",
+  "send_ticket": false
+}
+
+###
+
+### Cancel Ticket dengan Reason
+POST {{baseUrl}}/api/v1/voltras/flight/ticket/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "reason": "Perubahan jadwal penumpang"
+}
+
+###
+
+### Cancel Ticket tanpa Reason
+POST {{baseUrl}}/api/v1/voltras/flight/ticket/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1
+}
+
+###
+
+### Cancel - Sudah Cancelled (expect 422)
+POST {{baseUrl}}/api/v1/voltras/flight/ticket/cancel
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "reason": "Test double cancel"
+}
+
+###
+
+### Print Ticket - download HTML/PDF
+GET {{baseUrl}}/api/v1/voltras/flight/print?pnr=14773
+Authorization: Bearer {{token}}
+
+###
+
+### Print Insurance - download PDF (hanya jika with_insurance=true & TICKETED)
+GET {{baseUrl}}/api/v1/voltras/flight/print-insurance?pnr=14773
+Authorization: Bearer {{token}}
+
+###
+
+### Advance Retrieve - semua PNR Lion Air April 2026
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "JT",
+  "from_date": "2026-04-01",
+  "to_date": "2026-04-30",
+  "status": "ALL"
+}
+
+###
+
+### Advance Retrieve - filter BOOKED
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "JT",
+  "from_date": "2026-04-01",
+  "to_date": "2026-04-30",
+  "status": "BOOKED"
+}
+
+###
+
+### Advance Retrieve - filter TICKETED
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "JT",
+  "from_date": "2026-04-01",
+  "to_date": "2026-04-30",
+  "status": "TICKETED"
+}
+
+###
+
+### Advance Retrieve - filter CANCELED
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "JT",
+  "from_date": "2026-04-01",
+  "to_date": "2026-04-30",
+  "status": "CANCELED"
+}
+
+###
+
+### Advance Retrieve - Status tidak valid (expect 400)
+POST {{baseUrl}}/api/v1/voltras/flight/advance-retrieve
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "airline": "JT",
+  "from_date": "2026-04-01",
+  "to_date": "2026-04-30",
+  "status": "INVALID"
+}
+
+###
+
+
+### ============================================================
+### 7. MASTER DATA & SERVICES
+### ============================================================
+
+### Get Countries
+GET {{baseUrl}}/api/v1/services/countries
+Authorization: Bearer {{token}}
+
+###
+
+### Get Airports
+GET {{baseUrl}}/api/v1/services/airports
+Authorization: Bearer {{token}}
+
+###
+
+### Get Airlines
+GET {{baseUrl}}/api/v1/services/airlines
+Authorization: Bearer {{token}}
+
+###
+
+### Get VA Banks
+GET {{baseUrl}}/api/v1/services/va-banks
+Authorization: Bearer {{token}}
+
+###
+
+### Create Transaction (Payment)
+POST {{baseUrl}}/api/v1/services/payment/transactions
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "payment_method_id": 1,
+  "bank_code": "BCA",
+  "amount": 1618989,
+  "admin_fee": 5000,
+  "markup": 0
+}
+
+###
+
+### Check Transaction Status
+POST {{baseUrl}}/api/v1/services/payment/check
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "external_id": "INV-20260423-0001"
+}
+
+###
+
+### Get Balance by Phone
+GET {{baseUrl}}/api/v1/services/balance/08123456789
+Authorization: Bearer {{token}}
+
+###
+
+### Send Documents via Email
+POST {{baseUrl}}/api/v1/services/documents/send
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "email": "john.doe@example.com"
+}
+
+###
+
+### Print Documents - Itinerary
+POST {{baseUrl}}/api/v1/services/documents/print
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "doc_type": "ITINERARY"
+}
+
+###
+
+### Print Documents - Ticket
+POST {{baseUrl}}/api/v1/services/documents/print
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "doc_type": "TICKET"
+}
+
+###
+
+### Print Documents - Invoice
+POST {{baseUrl}}/api/v1/services/documents/print
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "doc_type": "INVOICE"
+}
+
+###
+
+
+### ============================================================
+### 8. BOOKING HISTORY
+### ============================================================
+
+### Get My Bookings
+GET {{baseUrl}}/api/v1/bookings
+Authorization: Bearer {{token}}
+
+###
+
+### Get Booking Detail
+GET {{baseUrl}}/api/v1/bookings/1
+Authorization: Bearer {{token}}
+
+###
+
+### Get Booking Detail - Not Found (expect 404)
+GET {{baseUrl}}/api/v1/bookings/99999
+Authorization: Bearer {{token}}
+
+###
+
+
+### ============================================================
+### 9. ADMIN ROUTES
+### ============================================================
+
+### Get All Users
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get All Transactions
+GET {{baseUrl}}/api/v1/admin/transactions
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Get All Bookings
+GET {{baseUrl}}/api/v1/admin/bookings
+Authorization: Bearer {{adminToken}}
+
+###
+
+### Top Up Phone Balance
+POST {{baseUrl}}/api/v1/admin/balance/topup
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "phone": "08123456789",
+  "amount": 5000000
+}
+
+###
+
+### Deduct Phone Balance
+POST {{baseUrl}}/api/v1/admin/balance/deduct
+Content-Type: {{contentType}}
+Authorization: Bearer {{adminToken}}
+
+{
+  "phone": "08123456789",
+  "amount": 100000
+}
+
+###
+
+### Akses Admin Route dengan Token User (expect 403)
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{token}}
+
+###

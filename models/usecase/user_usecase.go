@@ -1,14 +1,14 @@
 package usecase
 
 import (
-	"backend/models"
-	"backend/models/repository"
+	"mobile-api/models"
+	"mobile-api/models/repository"
 	"errors"
 	"fmt"
 	"os"
 	"time"
 
-	"backend/controllers/middleware"
+	"mobile-api/controllers/middleware"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -30,10 +30,11 @@ type UserUsecase interface {
 
 type userUsecase struct {
 	repo repository.UserRepository
+	jwtSecret string
 }
 
-func NewUserUsecase(repo repository.UserRepository) UserUsecase {
-	return &userUsecase{repo: repo}
+func NewUserUsecase(repo repository.UserRepository, jwtSecret string) UserUsecase {
+    return &userUsecase{repo: repo, jwtSecret: jwtSecret}
 }
 
 func (u *userUsecase) Register(req *models.RegisterRequest) (*models.User, error) {

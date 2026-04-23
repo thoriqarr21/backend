@@ -46,7 +46,7 @@ test-clean:
 # Run tests in Docker
 test-docker:
 	@echo "Running tests in Docker..."
-	docker-compose exec backend go test ./tests/... -v
+	docker-compose exec mobile-api go test ./tests/... -v
 
 # Quick test (no cache)
 test-quick:

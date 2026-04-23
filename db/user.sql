@@ -1,13 +1,3 @@
--- CREATE TABLE users (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     email VARCHAR(255) UNIQUE,
---     username VARCHAR(255) UNIQUE,
---     password VARCHAR(255),
---     full_name VARCHAR(255),
---     role VARCHAR(20) DEFAULT 'user',
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
--- ) ENGINE=InnoDB;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE,

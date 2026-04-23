@@ -1,130 +1,130 @@
 package api
 
 import (
-	"backend/controllers"
-	"backend/controllers/middleware"
-	"backend/models"
-	"backend/models/repository"
-	"backend/models/usecase"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
+	servicesPkg "mobile-api/api/services"
+	voltrasPkg "mobile-api/api/voltras"
+	"mobile-api/controllers"
+	"mobile-api/controllers/middleware"
+	"mobile-api/models"
+	"mobile-api/models/repository"
+	"mobile-api/models/usecase"
 )
 
-func SetupRoutes(r *gin.Engine, db *gorm.DB) {
+func SetupRoutes(r *gin.Engine, db *gorm.DB, jwtSecret string) {
 	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
 		os.Mkdir("uploads", 0755)
 	}
 	r.Static("/uploads", "./uploads")
 
+	// ─── CONTROLLERS ─────────────────────────────────────────────────────────
 	userRepo := repository.NewUserRepository(db)
-	userUsecase := usecase.NewUserUsecase(userRepo)
+	userUsecase := usecase.NewUserUsecase(userRepo, jwtSecret)
 	userController := controllers.NewUserController(userUsecase)
+	bookingController := controllers.NewBookingController(db)
 
-	barangRepo := repository.NewBarangRepository(db)
-	barangUsecase := usecase.NewBarangUsecase(barangRepo)
-	barangController := controllers.NewBarangController(barangUsecase)
-
-	historyRepo := repository.NewTVMReportHistoryRepository(db)
-	historyUsecase := usecase.NewTVMReportHistoryUsecase(historyRepo)
-	historyController := controllers.NewTVMReportHistoryController(historyUsecase)
-
-	tvmRepo := repository.NewTVMReportRepository(db)
-	tvmUsecase := usecase.NewTVMReportUsecase(tvmRepo, barangRepo, historyRepo)
-	tvmController := controllers.NewTVMReportController(tvmUsecase)
-
-
-	// --- API v1 GROUP ---
+	// ─── API v1 ──────────────────────────────────────────────────────────────
 	v1 := r.Group("/api/v1")
+
+	// Public auth routes
+	auth := v1.Group("/auth")
 	{
-		// Public routes
-		auth := v1.Group("/auth")
-		{
-			auth.POST("/register", userController.Register)
-			auth.POST("/login", userController.Login)
-		}
+		auth.POST("/register", userController.Register)
+		auth.POST("/login", userController.Login)
+	}
 
-		// Protected auth routes
-		authProtected := v1.Group("/auth")
-		authProtected.Use(middleware.AuthMiddleware())
-		{
-			authProtected.POST("/logout", userController.Logout)
-		}
+	// Auth middleware shorthand
+	authMW := middleware.AuthMiddleware(jwtSecret)
+	adminMW := middleware.RoleMiddleware(db, models.RoleAdmin)
 
-		// Protected routes - All authenticated users
-		users := v1.Group("/users")
-		users.Use(middleware.AuthMiddleware())
-		{
-			users.GET("/profile", userController.GetProfile)
-			users.PUT("/profile/:id", userController.UpdateUser)
-			users.POST("/change-password", userController.ChangePassword)
-			users.POST("/reset-password", userController.ResetPassword)
-		} 
+	// Protected auth routes
+	authProtected := v1.Group("/auth")
+	authProtected.Use(authMW)
+	{
+		authProtected.POST("/logout", userController.Logout)
+	}
 
-		barang := v1.Group("/barang")
-		barang.Use(middleware.AuthMiddleware())
-		{
-			barang.GET("/", barangController.GetAllBarang)
-		}
+	// User profile routes
+	users := v1.Group("/users")
+	users.Use(authMW)
+	{
+		users.GET("/profile", userController.GetProfile)
+		users.PUT("/profile/:id", userController.UpdateUser)
+		users.POST("/change-password", userController.ChangePassword)
+		users.POST("/reset-password", userController.ResetPassword)
+	}
 
-		// Protected routes - Admin only
-		admin := v1.Group("/admin")
-		admin.Use(middleware.AuthMiddleware())
-		admin.Use(middleware.RoleMiddleware(db, models.RoleAdmin))
-		{
-			admin.GET("/users", userController.GetAllUsers)
-			admin.POST("/users", userController.CreateUser)
-			admin.GET("/users/:id", userController.GetUserByID)
-			admin.PUT("/users/:id", userController.UpdateUser)
-			admin.POST("/users/:id/reset-password", userController.AdminResetPassword)
-			admin.DELETE("/users/:id", userController.DeleteUser)
-			admin.GET("/reports/statistics", tvmController.GetStatistics)
-			admin.GET("/dashboard", tvmController.GetDashboard)
-			admin.GET("/reports", tvmController.GetAllReports)
-			admin.PUT("/reports/:id", tvmController.UpdateReport)
-			admin.PATCH("/reports/:id/open", tvmController.OpenReport)
-			admin.DELETE("/reports/:id", tvmController.DeleteReport)
-			admin.GET("/barang", barangController.GetAllBarang)
-			admin.GET("/barang/:id", barangController.GetBarangByID)
-			admin.POST("/barang", barangController.CreateBarang)
-			admin.PUT("/barang/:id", barangController.UpdateBarang)
-			admin.DELETE("/barang/:id", barangController.DeleteBarang)
-		}
-		// routes/api.go
-		teknisi := v1.Group("/teknisi")
-		teknisi.Use(middleware.AuthMiddleware())
-		teknisi.Use(middleware.RoleMiddleware(db, models.RoleTeknisi))
-		{
-			teknisi.GET("/reports/pending", tvmController.GetPendingReports)
-			teknisi.PATCH("/reports/:id/take", tvmController.TakeReport)
-			teknisi.GET("/reports/my", tvmController.GetMyReportsAsTechnician)
-			teknisi.PUT("/reports/:id/resolve", tvmController.ResolveReport)
-		}
+	// User booking history
+	bookings := v1.Group("/bookings")
+	bookings.Use(authMW)
+	{
+		bookings.GET("", bookingController.GetMyBookings)
+		bookings.GET("/:id", bookingController.GetBookingDetail)
+	}
 
-		// Protected routes - TVM Reports (User & Admin)
-		reports := v1.Group("/reports")
-		reports.Use(middleware.AuthMiddleware())
+	// ─── VOLTRAS FLIGHT ROUTES ───────────────────────────────────────────────
+	voltras := v1.Group("/voltras")
+	{
+		// Public - no auth needed
+		voltras.GET("/office-info", voltrasPkg.GetOfficeInformationHandler)
+
+		// Protected
+		voltrasAuth := voltras.Group("")
+		voltrasAuth.Use(authMW)
 		{
-			// Endpoint ini sekarang mengharapkan multipart/form-data untuk upload file
-			reports.POST("/", tvmController.CreateReport) 
-			reports.POST("", tvmController.CreateReport) 
-			reports.GET("/:id/history", historyController.GetByReportID)
-			reports.GET("/history", historyController.GetAll)
-			reports.GET("/:id/historyuser", historyController.FindByChangedBy)
-			reports.GET("/", tvmController.GetAllReports)
-			reports.PATCH("/:id/status", tvmController.UpdateStatusByPetugas)
-			reports.GET("/my", tvmController.GetMyReports)
-			reports.GET("/:id", tvmController.GetReportByID)
-			reports.PUT("/:id", tvmController.UpdateReport)
-			reports.DELETE("/:id", tvmController.DeleteReport)
+			voltrasAuth.POST("/flight/search", voltrasPkg.FlightAvailabilityHandler(db))
+			voltrasAuth.POST("/flight/fare/retrieve", voltrasPkg.RetrieveFareHandler)
+			voltrasAuth.POST("/flight/book", voltrasPkg.BookFlightHandler(db))
+			voltrasAuth.POST("/flight/pnr/retrieve", voltrasPkg.RetrievePNRHandler(db))
+			voltrasAuth.POST("/flight/ticket", voltrasPkg.TicketingFlightHandler(db))
+			voltrasAuth.POST("/flight/ticket/cancel", voltrasPkg.CancelTicketHandler(db))
+			voltrasAuth.POST("/flight/autoticket", voltrasPkg.AutoTicketHandler(db))
+			voltrasAuth.GET("/flight/print", voltrasPkg.PrintTicketHandler)
+			voltrasAuth.GET("/flight/print-insurance", voltrasPkg.PrintInsuranceHandler)
+			voltrasAuth.POST("/flight/advance-retrieve", voltrasPkg.AdvanceRetrieveHandler)
 		}
 	}
 
-	// Health check
+	// ─── SERVICES ROUTES ─────────────────────────────────────────────────────
+	svc := v1.Group("/services")
+	svc.Use(authMW)
+	{
+		// Master data
+		svc.GET("/countries", servicesPkg.GetCountriesHandler(db))
+		svc.GET("/airports", servicesPkg.GetAirportsHandler(db))
+		svc.GET("/airlines", servicesPkg.GetAirlinesHandler(db))
+		svc.GET("/airlines/:id/logo", servicesPkg.GetAirlineLogoHandler(db))
+		svc.GET("/va-banks", servicesPkg.GetVABanksHandler(db))
+		svc.GET("/va-banks/:id/logo", servicesPkg.GetVABankLogoHandler(db))
+
+		// Payment
+		svc.POST("/payment/transactions", servicesPkg.CreateTransactionHandler(db))
+		svc.POST("/transactions/check", servicesPkg.CheckTransactionHandler())
+
+		// Documents
+		svc.POST("/documents/send", servicesPkg.SendBookingDocumentsHandler(db))
+		svc.POST("/documents/print", servicesPkg.PrintDocumentsHandler(db))
+
+		// Balance
+		svc.GET("/balance/:phone", servicesPkg.GetBalanceHandler(db))
+	}
+
+	// ─── ADMIN ROUTES ─────────────────────────────────────────────────────────
+	admin := v1.Group("/admin")
+	admin.Use(authMW, adminMW)
+	{
+		admin.GET("/users", userController.GetAllUsers)
+	}
+
+	// ─── HEALTH CHECK ─────────────────────────────────────────────────────────
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "ok",
 			"message": "Server is running",
 		})
 	})

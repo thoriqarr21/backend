@@ -174,7 +174,7 @@ Authorization: Bearer {{userToken}}
 }
 
 ### ========================================
-### EZYTIX BACKEND API TEST COLLECTION
+### EZYTIX mobile-api API TEST COLLECTION
 ### ========================================
 
 ### Variables
@@ -347,3 +347,208 @@ Authorization: Bearer {{token}}
 # 3. After login, copy the token from response
 # 4. Replace @token variable with your actual token
 # 5. Test protected routes with valid token
+
+
+### ========================================
+### EZYTIX MOBILE API - FULL TEST SUITE
+### ========================================
+
+@baseUrl = http://localhost:8080
+@jwtSecret = your-super-secret-jwt-key-change-this-in-production
+
+# Langkah: 
+# 1. Login
+# 2. Copy Token dari response
+# 3. Paste ke variable @token di bawah ini
+@token = PASTE_TOKEN_HERE
+@adminToken = PASTE_ADMIN_TOKEN_HERE
+
+### ----------------------------------------
+### 1. HEALTH & STATIC ASSETS
+### ----------------------------------------
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Access Uploaded Files (Static)
+GET {{baseUrl}}/uploads/sample-logo.png
+
+
+### ----------------------------------------
+### 2. AUTHENTICATION (PUBLIC)
+### ----------------------------------------
+
+### Register User
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "thoriq_rasyid",
+  "email": "thoriq@ezytix.com",
+  "password": "password123",
+  "full_name": "Muhammad Thoriq Ar Rasyid",
+  "phone": "08123456789"
+}
+
+### Login
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "thoriq@ezytix.com",
+  "password": "password123"
+}
+
+
+### ----------------------------------------
+### 3. USER PROFILE & MANAGEMENT (PROTECTED)
+### ----------------------------------------
+
+### Get My Profile
+GET {{baseUrl}}/api/v1/users/profile
+Authorization: Bearer {{token}}
+
+### Update Profile
+PUT {{baseUrl}}/api/v1/users/profile/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "full_name": "Thoriq Updated",
+  "phone": "089988776655"
+}
+
+### Change Password
+POST {{baseUrl}}/api/v1/users/change-password
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "old_password": "password123",
+  "new_password": "newpassword123"
+}
+
+### Logout
+POST {{baseUrl}}/api/v1/auth/logout
+Authorization: Bearer {{token}}
+
+
+### ----------------------------------------
+### 4. VOLTRAS FLIGHT INTEGRATION
+### ----------------------------------------
+
+### Get Voltras Office Info (Public)
+GET {{baseUrl}}/api/v1/voltras/office-info
+
+### Search Flights
+POST {{baseUrl}}/api/v1/voltras/flight/search
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "origin": "CGK",
+  "destination": "DPS",
+  "departure_date": "2026-06-20",
+  "adults": 1,
+  "trip_type": "OW"
+}
+
+### Retrieve Fare
+POST {{baseUrl}}/api/v1/voltras/flight/fare/retrieve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "flight_key": "FLIGHT_KEY_DATA",
+  "class_code": "Y"
+}
+
+### Book Flight
+POST {{baseUrl}}/api/v1/voltras/flight/book
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "flight_key": "FLIGHT_KEY_DATA",
+  "class_code": "Y",
+  "contact_name": "Thoriq",
+  "contact_email": "thoriq@ezytix.com",
+  "contact_phone": "08123456789",
+  "passengers": [
+    {
+      "type": "ADT",
+      "title": "MR",
+      "first_name": "Muhammad",
+      "last_name": "Thoriq",
+      "nationality": "ID"
+    }
+  ]
+}
+
+### Retrieve PNR
+POST {{baseUrl}}/api/v1/voltras/flight/pnr/retrieve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "pnr": "ABCDEF"
+}
+
+
+### ----------------------------------------
+### 5. SERVICES & MASTER DATA
+### ----------------------------------------
+
+### Get Countries
+GET {{baseUrl}}/api/v1/services/countries
+Authorization: Bearer {{token}}
+
+### Get Airports
+GET {{baseUrl}}/api/v1/services/airports
+Authorization: Bearer {{token}}
+
+### Get Airlines
+GET {{baseUrl}}/api/v1/services/airlines
+Authorization: Bearer {{token}}
+
+### Get VA Banks
+GET {{baseUrl}}/api/v1/services/va-banks
+Authorization: Bearer {{token}}
+
+### Create Transaction (Payment)
+POST {{baseUrl}}/api/v1/services/payment/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "booking_id": 1,
+  "payment_method": "VIRTUAL_ACCOUNT",
+  "bank_code": "BCA",
+  "amount": 1500000
+}
+
+### Get Balance Check
+GET {{baseUrl}}/api/v1/services/balance/08123456789
+Authorization: Bearer {{token}}
+
+
+### ----------------------------------------
+### 6. BOOKINGS HISTORY
+### ----------------------------------------
+
+### Get My Bookings
+GET {{baseUrl}}/api/v1/bookings
+Authorization: Bearer {{token}}
+
+### Get Booking Detail
+GET {{baseUrl}}/api/v1/bookings/1
+Authorization: Bearer {{token}}
+
+
+### ----------------------------------------
+### 7. ADMIN ROUTES (ADMIN ONLY)
+### ----------------------------------------
+
+### Get All Users List
+GET {{baseUrl}}/api/v1/admin/users
+Authorization: Bearer {{adminToken}}

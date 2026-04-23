@@ -1,0 +1,1 @@
+INSERT INTO "t_vending_machines" ("id", "vm_code", "airport_id", "admin_fee", "markup_pesawat", "markup_kereta", "markup_hotel", "markup_ppob", "markup_themepark", "is_active", "last_heartbeat") VALUES (1, 'CGK001', 5829, '10000.00', '100000.00', '0.00', '0.00', '0.00', '0.00', 't', '2026-04-13 14:06:05');

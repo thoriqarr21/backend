@@ -1,1 +1,0 @@
-drop table tvm_report_histories;

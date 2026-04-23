@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"backend/models"
+	"mobile-api/models"
 	"fmt"
 	"testing"
 

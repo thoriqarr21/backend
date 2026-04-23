@@ -1,10 +1,10 @@
 package tests
 
 import (
-	"backend/api"
-	"backend/config"
+	"mobile-api/api"
+	"mobile-api/config"
 
-	// "backend/models"
+	// "mobile-api/models"
 	"os"
 	"testing"
 

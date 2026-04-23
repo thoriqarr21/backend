@@ -1,0 +1,4 @@
+INSERT INTO "t_contacts" ("id", "first_name", "last_name", "phone", "email", "created_at", "updated_at") VALUES (7, 'FIRMAN', 'UTINA', '6283823113798', 'firman@gmail.com', '2026-02-24 23:00:07.828471', '2026-02-24 23:00:07.828471');
+INSERT INTO "t_contacts" ("id", "first_name", "last_name", "phone", "email", "created_at", "updated_at") VALUES (10, 'JOHN', 'DOE', '6283823113798', 'john@gmail.com', '2026-02-26 11:05:37.351812', '2026-02-26 11:05:37.351812');
+INSERT INTO "t_contacts" ("id", "first_name", "last_name", "phone", "email", "created_at", "updated_at") VALUES (11, 'RUDI', 'TABUTI', '6283823113798', 'rudi@gmail.com', '2026-03-02 17:59:48.213954', '2026-03-02 17:59:48.213954');
+INSERT INTO "t_contacts" ("id", "first_name", "last_name", "phone", "email", "created_at", "updated_at") VALUES (12, 'REIHAN', 'ADAM', '6283823113798', 'reihan@gmail.com', '2026-03-02 18:06:49.125639', '2026-03-02 18:06:49.125639');
